@@ -194,6 +194,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		return
 	}
 
 	port := os.Getenv("GOAPP_PORT")
