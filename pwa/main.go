@@ -185,7 +185,20 @@ func main() {
 	app.Route("/login", func() app.Composer { return &loginContainer{} })
 	app.RunWhenOnBrowser()
 
+	if os.Getenv("BUILD_STATIC") == "true" {
+		err := app.GenerateStaticWebsite(".", &app.Handler{
+			Name:        "Flush-Log",
+			Description: "bowel tracking app",
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	port := os.Getenv("GOAPP_PORT")
+	if port == "" {
+		log.Fatal("GOAPP_PORT not set")
+	}
 	apiUrlBytes, err := os.ReadFile("web/apiurl")
 	if err != nil {
 		log.Fatal(err)
@@ -195,7 +208,7 @@ func main() {
 	log.Println("Listening on "+port)
 	log.Println("API url: ", apiUrl)
 	http.Handle("/", &app.Handler{
-		Name: "Flush Log",
+		Name: "Flush-Log",
 		Description: "bowel tracking app",
 		Scripts: []string{
 			"https://cdn.tailwindcss.com",
