@@ -1,4 +1,4 @@
-name: Build Go image
+name: Build API image
 
 on:
   push:
@@ -20,10 +20,6 @@ jobs:
       id-token: write
 
     steps:
-      - name: test
-        run:
-          echo ${{ steps.meta.outputs.tags }}
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -42,7 +38,12 @@ jobs:
         id: meta
         uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
         with:
-          images: ghcr.io/pgulb/flush-log:api
+          images: ghcr.io/pgulb/flush-log
+
+      - name: test
+        run:
+          echo ${{ steps.meta.outputs.tags }}
+          echo ${{ steps.meta.outputs.labels }}
 
       - name: Build and push Docker image
         id: build-and-push
