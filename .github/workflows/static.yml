@@ -38,7 +38,7 @@ jobs:
           mkdir -p ./app/web &&
           echo -n ${{ vars.FLUSH_API_URL }} > ./app/web/apiurl &&
           GOARCH=wasm GOOS=js go build -o ./app/web/app.wasm &&
-          GOARCH=amd64 GOOS=linux go build -o ./app/flush-log &&
+          go build -o ./app/ &&
           mv app ..
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
