@@ -32,13 +32,15 @@ jobs:
           go-version: '1.23.2'
       - name: Build static files
         env:
-          BUILD_STATIC: "true"
+          BUILD_STATIC: true
         run: |
           cd pwa &&
           mkdir -p ./app/web &&
           echo -n ${{ vars.FLUSH_API_URL }} > ./app/web/apiurl &&
           GOARCH=wasm GOOS=js go build -o ./app/web/app.wasm &&
-          go build -o ./app/ &&
+          BUILD_STATIC=true go build &&
+          mv ./*.html ./*.css ./*.js ./app &&
+          ls -ltrRa &&
           mv app ..
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
