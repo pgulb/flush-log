@@ -11,7 +11,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build:
+  build-api:
 
     runs-on: ubuntu-latest
     permissions:
@@ -20,6 +20,10 @@ jobs:
       id-token: write
 
     steps:
+      - name: test
+        run:
+          echo ${{ steps.meta.outputs.tags }}
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
