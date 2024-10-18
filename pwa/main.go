@@ -189,6 +189,7 @@ func main() {
 		err := app.GenerateStaticWebsite(".", &app.Handler{
 			Name:        "Flush-Log",
 			Description: "bowel tracking app",
+			Resources:   app.GitHubPages("flush-log"),
 		})
 		if err != nil {
 			log.Fatal(err)
