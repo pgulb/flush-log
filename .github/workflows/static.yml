@@ -38,9 +38,10 @@ jobs:
           mkdir -p ./app/web &&
           echo -n ${{ vars.FLUSH_API_URL }} > ./app/web/apiurl &&
           GOARCH=wasm GOOS=js go build -o ./app/web/app.wasm &&
-          BUILD_STATIC=true go build &&
-          mv ./*.html ./*.css ./*.js ./app &&
+          go build &&
+          ./flush-log &&
           ls -ltrRa &&
+          mv ./*.html ./*.webmanifest ./*.js ./app &&
           mv app ..
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
