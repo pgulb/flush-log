@@ -1,0 +1,21 @@
+name: Deploy API to VPS
+
+on:
+  push:
+    branches: ["main"]
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Deploy
+        run: |
+          echo ${{ secrets.FROG_KEY }} | base64 -d > frog &&
+          chmod 600 frog &&
+          ssh -o StrictHostKeyChecking=no -i frog ${{ secrets.FROG_ADDRESS }} -p${{ secrets.FROG_PORT }} "docker rm -f flush-log-api" &&
+          ssh -o StrictHostKeyChecking=no -i frog ${{ secrets.FROG_ADDRESS }} -p${{ secrets.FROG_PORT }} "docker image rm ghcr.io/pgulb/flush-log:api" &&
+          ssh -o StrictHostKeyChecking=no -i frog ${{ secrets.FROG_ADDRESS }} -p${{ secrets.FROG_PORT }} "docker run -d -p 30149:6789 --name flush-log-api --restart=unless-stopped ghcr.io/pgulb/flush-log:api"
