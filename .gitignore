@@ -1,0 +1,10 @@
+# python
+__pycache__
+venv/
+.venv/
+
+# go
+tmp/
+web/
+flush-log
+flush-log.exe

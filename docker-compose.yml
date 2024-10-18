@@ -1,0 +1,21 @@
+services:
+  flush-log:
+    image: cosmtrek/air
+    working_dir: /src
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+    environment:
+      - GOAPP_PORT=:8080
+    volumes:
+      - ./pwa:/src/
+  flush-api:
+    build:
+      context: ./api/
+      dockerfile: Dockerfile-hot-reload
+    working_dir: /src
+    ports:
+      - 6789:6789
+    restart: unless-stopped
+    volumes:
+      - ./api:/src/
