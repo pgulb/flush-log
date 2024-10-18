@@ -47,6 +47,6 @@ jobs:
           context: ./api/
           push: ${{ github.event_name != 'pull_request' }}
           tags: "api"
-          labels: "pgulb/flush-log:api"
+          labels: "ghcr.io/pgulb/flush-log:api"
           cache-from: type=gha
           cache-to: type=gha,mode=max
