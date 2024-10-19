@@ -13,12 +13,13 @@ import (
 
 type creds struct {
 	UserColonPass string
-	LoggedIn bool
+	LoggedIn      bool
 }
 
 type hello struct {
 	app.Compo
 }
+
 func (h *hello) Render() app.UI {
 	return app.H1().Text("Flush Log").Class("text-3xl")
 }
@@ -26,6 +27,7 @@ func (h *hello) Render() app.UI {
 type paragraphLoremIpsum struct {
 	app.Compo
 }
+
 func (p *paragraphLoremIpsum) Render() app.UI {
 	return app.P().Text(`Data from API will appear below.`).Class(
 		"py-2",
@@ -39,13 +41,14 @@ type rootContainer struct {
 	messageFromApi string
 	buttonUpdate
 }
+
 func (b *rootContainer) OnMount(ctx app.Context) {
 	var creds creds
 	ctx.GetState("creds", &creds)
 	// ctx.GetState("loggedIn", &loggedIn)
 	log.Println("Logged in: ", creds.LoggedIn)
 	if !creds.LoggedIn {
-		app.Window().Set("location", "/login")
+		app.Window().Set("location", "/flush-log/login")
 	} else {
 		b.messageFromApi = getDataFromApi(ctx)
 	}
@@ -67,9 +70,10 @@ type buttonUpdate struct {
 	app.Compo
 	message *string
 }
+
 func (b *buttonUpdate) Render() app.UI {
 	return app.Button().Text("Update").OnClick(b.onClick).Class(
-		"bg-yellow-500 hover:bg-yellow-700 text-black font-bold py-2 px-4 rounded absolute bottom-4 left-4",)
+		"bg-yellow-500 hover:bg-yellow-700 text-black font-bold py-2 px-4 rounded absolute bottom-4 left-4")
 }
 func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 	var creds creds
@@ -84,6 +88,7 @@ func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 type loginContainer struct {
 	app.Compo
 }
+
 func (l *loginContainer) Render() app.UI {
 	return app.Div().Body(app.Div().Body(
 		app.P().Text("Log in to continue.").Class("font-bold"),
@@ -98,16 +103,17 @@ func (l *loginContainer) Render() app.UI {
 			app.Br(),
 			&buttonLogin{},
 		),
-	).Class("p-4 text-center text-xl shadow-lg bg-white rounded-lg",)).Class(
+	).Class("p-4 text-center text-xl shadow-lg bg-white rounded-lg")).Class(
 		"flex flex-row min-h-screen justify-center items-center")
 }
 
 type buttonLogin struct {
 	app.Compo
 }
+
 func (b *buttonLogin) Render() app.UI {
 	return app.Button().Text("Log in").OnClick(b.onClick).Class(
-		"font-bold bg-yellow-500 p-2 rounded text-white",)
+		"font-bold bg-yellow-500 p-2 rounded text-white")
 }
 func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 	log.Println("Logging in...")
@@ -117,22 +123,23 @@ func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 	if user == "admin" && pass == "admin" {
 		ctx.SetState("creds", creds{
 			UserColonPass: base64.StdEncoding.EncodeToString([]byte(user + ":" + pass)),
-			LoggedIn: true,
-			}).ExpiresIn(time.Second * 60).PersistWithEncryption()
-		app.Window().Set("location", "/")
+			LoggedIn:      true,
+		}).ExpiresIn(time.Second * 60).PersistWithEncryption()
+		app.Window().Set("location", "/flush-log/")
 	}
 }
 
 type buttonLogout struct {
 	app.Compo
 }
+
 func (b *buttonLogout) Render() app.UI {
 	return app.Button().Text("Log out").OnClick(b.onClick).Class(
-		"font-bold border-2 border-white p-2 rounded absolute bottom-4 right-4",)
+		"font-bold border-2 border-white p-2 rounded absolute bottom-4 right-4")
 }
 func (b *buttonLogout) onClick(ctx app.Context, e app.Event) {
 	ctx.SetState("creds", creds{LoggedIn: false}).PersistWithEncryption()
-	app.Window().Set("location", "/")
+	app.Window().Set("location", "/flush-log/")
 }
 
 func getDataFromApi(ctx app.Context) string {
@@ -156,12 +163,12 @@ func getDataFromApi(ctx app.Context) string {
 	r, err = http.DefaultClient.Do(req)
 	if r.StatusCode == 401 {
 		ctx.SetState("creds", creds{LoggedIn: false}).PersistWithEncryption()
-		app.Window().Set("location", "/login")
+		app.Window().Set("location", "/flush-log/login")
 	}
 	if err != nil {
 		displayError(err)
 	}
-	defer func ()  {
+	defer func() {
 		err := r.Body.Close()
 		if err != nil {
 			displayError(err)
@@ -180,8 +187,9 @@ func displayError(err error) {
 }
 
 func main() {
-	app.Route("/", func() app.Composer { return &rootContainer{
-	} })
+	app.Route("/", func() app.Composer {
+		return &rootContainer{}
+	})
 	app.Route("/login", func() app.Composer { return &loginContainer{} })
 	app.RunWhenOnBrowser()
 
@@ -207,10 +215,10 @@ func main() {
 	}
 	apiUrl := string(apiUrlBytes)
 
-	log.Println("Listening on "+port)
+	log.Println("Listening on " + port)
 	log.Println("API url: ", apiUrl)
 	http.Handle("/", &app.Handler{
-		Name: "Flush-Log",
+		Name:        "Flush-Log",
 		Description: "bowel tracking app",
 		Scripts: []string{
 			"https://cdn.tailwindcss.com",
