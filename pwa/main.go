@@ -143,7 +143,7 @@ func (b *buttonLogout) onClick(ctx app.Context, e app.Event) {
 }
 
 func getDataFromApi(ctx app.Context) string {
-	r, err := http.Get("/web/apiurl")
+	r, err := http.Get("/flush-log/web/apiurl")
 	if err != nil {
 		displayError(err)
 	}
