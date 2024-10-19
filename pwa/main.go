@@ -198,6 +198,9 @@ func main() {
 			Name:        "Flush-Log",
 			Description: "bowel tracking app",
 			Resources:   app.GitHubPages("flush-log"),
+			Scripts: []string{
+				"https://cdn.tailwindcss.com",
+			},
 		})
 		if err != nil {
 			log.Fatal(err)
