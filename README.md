@@ -1,5 +1,7 @@
 # flush-log
   
+<img src="./systems.png" alt="app diagram" align="center"/>
+  
 ## development
 ```sh
 docker compose up --build
