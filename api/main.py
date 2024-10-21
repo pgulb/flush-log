@@ -3,11 +3,12 @@ import os
 from random import randint
 
 import fastapi
+import pymongo
+from db import create_mock_client, create_mongo_client
 from fastapi import Depends, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-
-from db import create_mock_client, create_mongo_client
+from models import User
 
 app = fastapi.FastAPI()
 origins = [
@@ -50,6 +51,19 @@ def check_creds(credentials: HTTPBasicCredentials):
 def root(credentials: HTTPBasicCredentials = Depends(security)):
     check_creds(credentials)
     return f"Random string from api {randint(0, 10000)}"
+
+
+@app.post("/user")
+def create_user(user: User):
+    database = client.flush
+    users = database.users
+    try:
+        users.insert_one({"_id": user.username, "pass_hash": user.password})
+    except pymongo.errors.DuplicateKeyError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="User already exists"
+        ) from e
+    return user
 
 
 @app.get("/healthz", status_code=status.HTTP_200_OK)
