@@ -53,7 +53,7 @@ def root(credentials: HTTPBasicCredentials = Depends(security)):
     return f"Random string from api {randint(0, 10000)}"
 
 
-@app.post("/user")
+@app.post("/user", status_code=status.HTTP_201_CREATED)
 def create_user(user: User):
     database = client.flush
     users = database.users

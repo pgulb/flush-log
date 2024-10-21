@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-from pymongo.errors import ConnectionFailure
+from pymongo.errors import ConnectionFailure, DuplicateKeyError
 
 
 class MockClient:
@@ -7,6 +7,11 @@ class MockClient:
         self.admin = self
         if not_avalaible == "true":
             self.command = self.__bad_command
+        self.flush = self
+        self.users = self
+        if not_avalaible == "true":
+            self.insert_one = self.__bad_command
+        self.used_ids = []
 
     def __bad_command(self, command: str):
         raise ConnectionFailure(f"Mock server not available, used command: {command}")
@@ -15,6 +20,12 @@ class MockClient:
         if command == "ping":
             return "OK"
         raise NotImplementedError
+
+    def insert_one(self, document: dict) -> None:
+        if document["_id"] not in self.used_ids:
+            self.used_ids.append(document["_id"])
+        else:
+            raise DuplicateKeyError("Document already exists")
 
 
 def create_mongo_client(url: str) -> MongoClient:
