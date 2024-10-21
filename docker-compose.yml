@@ -25,3 +25,5 @@ services:
   mongo:
     image: mongo:8.0.1-noble
     restart: unless-stopped
+    ports:
+      - 27017:27017
