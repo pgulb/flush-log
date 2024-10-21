@@ -1,0 +1,18 @@
+version: '3'
+
+tasks:
+  default:
+    cmds:
+      - task --list-all
+  dev:
+    cmds:
+      - task cleanup
+      - docker volume prune -af
+      - docker compose up --build
+  cleanup:
+    cmds:
+      - docker compose down -v
+  test-api:
+    dir: ./api/
+    cmds:
+      - pytest -v
