@@ -4,7 +4,7 @@ on:
   push:
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
     services:
       mongo:
@@ -15,7 +15,7 @@ jobs:
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install go-task
-        run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /use/local/bin
+        run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
       - name: Setup uv venv
         run: task init-uv-venv
       - name: Run mock tests
