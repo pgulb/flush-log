@@ -18,7 +18,10 @@ services:
       - 6789:6789
     restart: unless-stopped
     environment:
-      - MONGO_URL=mock
+      - MONGO_URL=mongodb://mongo:27017/?connectTimeoutMS=3000&timeoutMS=4000&socketTimeoutMS=3000&serverSelectionTimeoutMS=4000
       - MOCK_NOT_AVAILABLE=false
     volumes:
       - ./api:/src/
+  mongo:
+    image: mongo:8.0.1-noble
+    restart: unless-stopped
