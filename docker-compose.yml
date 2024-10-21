@@ -17,5 +17,8 @@ services:
     ports:
       - 6789:6789
     restart: unless-stopped
+    environment:
+      - MONGO_URL=mock
+      - MOCK_NOT_AVAILABLE=false
     volumes:
       - ./api:/src/
