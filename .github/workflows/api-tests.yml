@@ -16,6 +16,10 @@ jobs:
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install go-task
         run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
+      - name: Install netcat
+        run: apt-get update && apt-get install -y netcat-traditional
+      - name: check mongo with nc
+        run: nc -vz mongo 27017
       - name: Setup uv venv
         run: task init-uv-venv
       - name: Run mock tests

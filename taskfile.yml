@@ -29,7 +29,7 @@ tasks:
       - uv run pytest tests/test_integration.py -v
     dir: api
     env:
-      MONGO_URL: mongodb://localhost:27017
+      MONGO_URL: mongodb://mongo:27017
   init-uv-venv:
     cmds:
       - uv venv
