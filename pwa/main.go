@@ -48,7 +48,7 @@ func (b *rootContainer) OnMount(ctx app.Context) {
 	// ctx.GetState("loggedIn", &loggedIn)
 	log.Println("Logged in: ", creds.LoggedIn)
 	if !creds.LoggedIn {
-		app.Window().Set("location", "/flush-log/login")
+		app.Window().Set("location", "login")
 	} else {
 		b.messageFromApi = getDataFromApi(ctx)
 	}
@@ -125,7 +125,7 @@ func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 			UserColonPass: base64.StdEncoding.EncodeToString([]byte(user + ":" + pass)),
 			LoggedIn:      true,
 		}).ExpiresIn(time.Second * 60).PersistWithEncryption()
-		app.Window().Set("location", "/flush-log/")
+		app.Window().Set("location", ".")
 	}
 }
 
@@ -139,11 +139,11 @@ func (b *buttonLogout) Render() app.UI {
 }
 func (b *buttonLogout) onClick(ctx app.Context, e app.Event) {
 	ctx.SetState("creds", creds{LoggedIn: false}).PersistWithEncryption()
-	app.Window().Set("location", "/flush-log/")
+	app.Window().Set("location", ".")
 }
 
 func getDataFromApi(ctx app.Context) string {
-	r, err := http.Get("/flush-log/web/apiurl")
+	r, err := http.Get("web/apiurl")
 	if err != nil {
 		displayError(err)
 	}
@@ -163,7 +163,7 @@ func getDataFromApi(ctx app.Context) string {
 	r, err = http.DefaultClient.Do(req)
 	if r.StatusCode == 401 {
 		ctx.SetState("creds", creds{LoggedIn: false}).PersistWithEncryption()
-		app.Window().Set("location", "/flush-log/login")
+		app.Window().Set("location", "login")
 	}
 	if err != nil {
 		displayError(err)
