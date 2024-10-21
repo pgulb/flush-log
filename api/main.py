@@ -34,7 +34,7 @@ else:
     client = create_mongo_client(mongo_setting)
     logging.info("Using mongo client")
     if "/?" in mongo_setting:
-        logging.info(f"client options: {mongo_setting.split("/?")[1]}")
+        logging.info(f"client options: {mongo_setting.split('/?')[1]}")
 
 
 def check_creds(credentials: HTTPBasicCredentials):
