@@ -1,0 +1,40 @@
+name: Run API tests
+
+on:
+  push:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:latest
+    services:
+      mongo:
+        image: mongo:8.0.1-noble
+        options: >-
+          --health-cmd "echo 'db.runCommand("ping").ok' | mongosh --quiet"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          --name mongo_container
+        ports:
+          - 27017:27017
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install curl
+        run: apt-get update && apt-get install -y curl
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Install go-task
+        run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
+      - name: Install netcat
+        run: apt-get update && apt-get install -y netcat-traditional
+      - name: check mongo with nc
+        run: nc -vz mongo 27017
+      - name: Setup uv venv
+        run: task init-uv-venv
+      - name: Run mock tests
+        run: task test-api-mock
+      - name: Run integration tests
+        run: task test-api-integration-ci

@@ -12,7 +12,27 @@ tasks:
   cleanup:
     cmds:
       - docker compose down -v
-  test-api:
-    dir: ./api/
+  test-api-mock:
     cmds:
-      - pytest -v
+      - uv run pytest tests/test_mock.py -v
+    dir: api
+    env:
+      MONGO_URL: mock
+  test-api-integration:
+    cmds:
+      - uv run pytest tests/test_integration.py -v
+    dir: api
+    env:
+      MONGO_URL: mongodb://localhost:27017
+  test-api-integration-ci:
+    cmds:
+      - uv run pytest tests/test_integration.py -v
+    dir: api
+    env:
+      MONGO_URL: mongodb://mongo:27017
+  init-uv-venv:
+    cmds:
+      - uv venv
+      - uv pip install -r requirements.txt
+      - uv pip install pytest httpx
+    dir: api
