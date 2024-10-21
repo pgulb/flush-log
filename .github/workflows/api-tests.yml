@@ -1,0 +1,25 @@
+name: Run API tests
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:8.0.1-noble
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Install go-task
+        run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /use/local/bin
+      - name: Setup uv venv
+        run: task init-uv-venv
+      - name: Run mock tests
+        run: task test-api-mock
+      - name: Run integration tests
+        run: task test-api-integration-ci
