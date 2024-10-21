@@ -9,6 +9,12 @@ jobs:
     services:
       mongo:
         image: mongo:8.0.1-noble
+        options: >-
+          --health-cmd "echo 'db.runCommand("ping").ok' | mongosh --quiet"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          --name mongo_container
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -17,7 +23,7 @@ jobs:
       - name: Install go-task
         run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
       - name: Install netcat
-        run: apt-get update && apt-get install -y netcat-traditional
+        run: sudo apt-get update && sudo apt-get install -y netcat-traditional
       - name: check mongo with nc
         run: nc -vz mongo 27017
       - name: Setup uv venv
