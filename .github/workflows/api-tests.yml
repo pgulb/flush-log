@@ -2,7 +2,6 @@ name: Run API tests
 
 on:
   push:
-    branches: ["main"]
 
 jobs:
   deploy:
