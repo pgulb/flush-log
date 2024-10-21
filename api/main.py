@@ -3,10 +3,11 @@ import os
 from random import randint
 
 import fastapi
-from db import create_mock_client, create_mongo_client
 from fastapi import Depends, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+
+from db import create_mock_client, create_mongo_client
 
 app = fastapi.FastAPI()
 origins = [
