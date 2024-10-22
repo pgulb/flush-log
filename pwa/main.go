@@ -16,28 +16,8 @@ type creds struct {
 	LoggedIn      bool
 }
 
-type hello struct {
-	app.Compo
-}
-
-func (h *hello) Render() app.UI {
-	return app.H1().Text("Flush Log").Class("text-3xl")
-}
-
-type paragraphLoremIpsum struct {
-	app.Compo
-}
-
-func (p *paragraphLoremIpsum) Render() app.UI {
-	return app.P().Text(`Data from API will appear below.`).Class(
-		"py-2",
-	)
-}
-
 type rootContainer struct {
 	app.Compo
-	hello
-	paragraphLoremIpsum
 	messageFromApi string
 	buttonUpdate
 }
@@ -45,7 +25,6 @@ type rootContainer struct {
 func (b *rootContainer) OnMount(ctx app.Context) {
 	var creds creds
 	ctx.GetState("creds", &creds)
-	// ctx.GetState("loggedIn", &loggedIn)
 	log.Println("Logged in: ", creds.LoggedIn)
 	if !creds.LoggedIn {
 		app.Window().Set("location", "login")
@@ -56,8 +35,8 @@ func (b *rootContainer) OnMount(ctx app.Context) {
 func (b *rootContainer) Render() app.UI {
 	b.buttonUpdate.message = &b.messageFromApi
 	return app.Div().Body(
-		b.hello.Render(),
-		b.paragraphLoremIpsum.Render(),
+		app.H1().Text("Flush Log").Class("text-2xl"),
+		app.P().Text("Tracked flushes:").Class("py-2"),
 		app.P().Text(b.messageFromApi).Class(
 			"py-2",
 		),
