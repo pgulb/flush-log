@@ -11,33 +11,17 @@ import (
 	"github.com/maxence-charriere/go-app/v10/pkg/app"
 )
 
+const (
+	yellowButtonCss = "font-bold bg-yellow-500 p-2 rounded text-white"
+)
+
 type creds struct {
 	UserColonPass string
 	LoggedIn      bool
 }
 
-type hello struct {
-	app.Compo
-}
-
-func (h *hello) Render() app.UI {
-	return app.H1().Text("Flush Log").Class("text-3xl")
-}
-
-type paragraphLoremIpsum struct {
-	app.Compo
-}
-
-func (p *paragraphLoremIpsum) Render() app.UI {
-	return app.P().Text(`Data from API will appear below.`).Class(
-		"py-2",
-	)
-}
-
 type rootContainer struct {
 	app.Compo
-	hello
-	paragraphLoremIpsum
 	messageFromApi string
 	buttonUpdate
 }
@@ -45,7 +29,6 @@ type rootContainer struct {
 func (b *rootContainer) OnMount(ctx app.Context) {
 	var creds creds
 	ctx.GetState("creds", &creds)
-	// ctx.GetState("loggedIn", &loggedIn)
 	log.Println("Logged in: ", creds.LoggedIn)
 	if !creds.LoggedIn {
 		app.Window().Set("location", "login")
@@ -56,8 +39,8 @@ func (b *rootContainer) OnMount(ctx app.Context) {
 func (b *rootContainer) Render() app.UI {
 	b.buttonUpdate.message = &b.messageFromApi
 	return app.Div().Body(
-		b.hello.Render(),
-		b.paragraphLoremIpsum.Render(),
+		app.H1().Text("Flush Log").Class("text-2xl"),
+		app.P().Text("Tracked flushes:").Class("py-2"),
 		app.P().Text(b.messageFromApi).Class(
 			"py-2",
 		),
@@ -113,16 +96,17 @@ type buttonLogin struct {
 
 func (b *buttonLogin) Render() app.UI {
 	return app.Button().Text("Log in").OnClick(b.onClick).Class(
-		"font-bold bg-yellow-500 p-2 rounded text-white")
+		yellowButtonCss)
 }
 func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 	log.Println("Logging in...")
 	user := app.Window().GetElementByID("username").Get("value").String()
 	pass := app.Window().GetElementByID("password").Get("value").String()
 
-	if user == "admin" && pass == "admin" {
+	status, basic_auth := tryLogin(ctx, user, pass)
+	if status == 200 {
 		ctx.SetState("creds", creds{
-			UserColonPass: base64.StdEncoding.EncodeToString([]byte(user + ":" + pass)),
+			UserColonPass: basic_auth,
 			LoggedIn:      true,
 		}).ExpiresIn(time.Second * 60).PersistWithEncryption()
 		app.Window().Set("location", ".")
@@ -142,7 +126,7 @@ func (b *buttonLogout) onClick(ctx app.Context, e app.Event) {
 	app.Window().Set("location", ".")
 }
 
-func getDataFromApi(ctx app.Context) string {
+func getApiUrl() string {
 	r, err := http.Get("web/apiurl")
 	if err != nil {
 		displayError(err)
@@ -151,7 +135,34 @@ func getDataFromApi(ctx app.Context) string {
 	if err != nil {
 		displayError(err)
 	}
-	apiUrl := string(bytes)
+	return string(bytes)
+}
+
+func tryLogin(ctx app.Context, username string, password string) (int, string) {
+	apiUrl := getApiUrl()
+	req, err := http.NewRequest("GET", apiUrl, nil)
+	if err != nil {
+		displayError(err)
+	}
+	basic_auth := base64.StdEncoding.EncodeToString(
+		[]byte(username + ":" + password),
+	)
+	req.Header.Add("Authorization", "Basic "+basic_auth)
+	r, err := http.DefaultClient.Do(req)
+	if err != nil {
+		displayError(err)
+	}
+	defer func() {
+		err := r.Body.Close()
+		if err != nil {
+			displayError(err)
+		}
+	}()
+	return r.StatusCode, basic_auth
+}
+
+func getDataFromApi(ctx app.Context) string {
+	apiUrl := getApiUrl()
 	req, err := http.NewRequest("GET", apiUrl, nil)
 	if err != nil {
 		displayError(err)
@@ -160,7 +171,7 @@ func getDataFromApi(ctx app.Context) string {
 	ctx.GetState("creds", &c)
 	req.Header.Add("Authorization", "Basic "+c.UserColonPass)
 
-	r, err = http.DefaultClient.Do(req)
+	r, err := http.DefaultClient.Do(req)
 	if r.StatusCode == 401 {
 		ctx.SetState("creds", creds{LoggedIn: false}).PersistWithEncryption()
 		app.Window().Set("location", "login")
@@ -174,7 +185,7 @@ func getDataFromApi(ctx app.Context) string {
 			displayError(err)
 		}
 	}()
-	bytes, err = io.ReadAll(r.Body)
+	bytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		displayError(err)
 	}
