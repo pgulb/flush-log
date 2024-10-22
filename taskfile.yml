@@ -11,6 +11,7 @@ tasks:
       - docker compose up --build
   cleanup:
     cmds:
+      - docker compose kill
       - docker compose down -v
   test-api-mock:
     cmds:
