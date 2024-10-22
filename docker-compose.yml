@@ -19,7 +19,6 @@ services:
     restart: unless-stopped
     environment:
       - MONGO_URL=mongodb://mongo:27017/?connectTimeoutMS=3000&timeoutMS=4000&socketTimeoutMS=3000&serverSelectionTimeoutMS=4000
-      - MOCK_NOT_AVAILABLE=false
     volumes:
       - ./api:/src/
   mongo:
