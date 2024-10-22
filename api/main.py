@@ -48,6 +48,14 @@ def raise_basic_exception():
     )
 
 
+def filter_from_flush(credentials: HTTPBasicCredentials, flush: Flush) -> dict:
+    return {
+        "time_start": dateutil.parser.isoparse(flush.time_start),
+        "time_end": dateutil.parser.isoparse(flush.time_end),
+        "user_id": credentials.username,
+    }
+
+
 def check_creds(credentials: HTTPBasicCredentials):
     database = client.flush
     users = database.users
@@ -103,11 +111,7 @@ def create_update_flush(
     flushes = client.flush.flushes
     try:
         result = flushes.update_one(
-            filter={
-                "time_start": dateutil.parser.isoparse(flush.time_start),
-                "time_end": dateutil.parser.isoparse(flush.time_end),
-                "user_id": credentials.username,
-            },
+            filter=filter_from_flush(credentials, flush),
             update={
                 "$set": {
                     "time_start": dateutil.parser.isoparse(flush.time_start),
@@ -125,6 +129,21 @@ def create_update_flush(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Error adding flush"
+        ) from e
+    return flush.time_start
+
+
+@app.delete("/flush", status_code=status.HTTP_204_NO_CONTENT)
+def delete_flush(flush: Flush, credentials: HTTPBasicCredentials = Depends(security)):
+    check_creds(credentials)
+    flushes = client.flush.flushes
+    try:
+        result = flushes.delete_one(filter=filter_from_flush(credentials, flush))
+        if result.deleted_count != 1:
+            raise Exception("Flush not deleted")
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Error deleting flush"
         ) from e
     return flush.time_start
 
