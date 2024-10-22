@@ -12,14 +12,12 @@ client = TestClient(app)
 
 def test_flush_delete():
     create_user(client, "testflushdelete", "testflushdelete")
-    for i in range(1, 11):
+    for i in range(1, 9):
         response = client.put(
             "/flush",
             json={
-                "time_start": datetime.now().isoformat(timespec="minutes"),
-                "time_end": (datetime.now() + timedelta(minutes=1 * i)).isoformat(
-                    timespec="minutes"
-                ),
+                "time_start": "2012-01-19 17:00:00",
+                "time_end": f"2012-01-19 17:0{i}:00",
                 "rating": i,
                 "note": "w0w",
                 "phone_used": True,
@@ -30,15 +28,13 @@ def test_flush_delete():
             ),
         )
         assert response.status_code == status.HTTP_201_CREATED
-    for i in range(1, 11):
+    for i in range(1, 9):
         response = client.request(
             "DELETE",
             "/flush",
             json={
-                "time_start": datetime.now().isoformat(timespec="minutes"),
-                "time_end": (datetime.now() + timedelta(minutes=1 * i)).isoformat(
-                    timespec="minutes"
-                ),
+                "time_start": "2012-01-19 17:00:00",
+                "time_end": f"2012-01-19 17:0{i}:00",
                 "rating": i,
                 "note": "w0w",
                 "phone_used": True,
