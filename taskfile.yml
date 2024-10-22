@@ -15,18 +15,21 @@ tasks:
   test-api-mock:
     cmds:
       - uv run pytest tests/test_mock.py -v
+      - uv run pytest tests/universal/ -v
     dir: api
     env:
       MONGO_URL: mock
   test-api-integration:
     cmds:
       - uv run pytest tests/test_integration.py -v
+      - uv run pytest tests/universal/ -v
     dir: api
     env:
       MONGO_URL: mongodb://localhost:27017
   test-api-integration-ci:
     cmds:
       - uv run pytest tests/test_integration.py -v
+      - uv run pytest tests/universal/ -v
     dir: api
     env:
       MONGO_URL: mongodb://mongo:27017

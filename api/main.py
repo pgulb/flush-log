@@ -1,13 +1,14 @@
 import logging
 import os
-from random import randint
 
 import fastapi
+import pymongo
+from db import create_mock_client, create_mongo_client, hash_password, verify_pass_hash
 from fastapi import Depends, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-
-from db import create_mock_client, create_mongo_client
+from fastapi.security import HTTPBasicCredentials
+from httpbasic import HTTPBasic
+from models import User
 
 app = fastapi.FastAPI()
 origins = [
@@ -37,19 +38,59 @@ else:
         logging.info(f"client options: {mongo_setting.split('/?')[1]}")
 
 
+def raise_basic_exception():
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Incorrect username or password",
+        headers={"WWW-Authenticate": "Basic"},
+    )
+
+
 def check_creds(credentials: HTTPBasicCredentials):
-    if not (credentials.username == "admin" and credentials.password == "admin"):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Basic"},
-        )
+    database = client.flush
+    users = database.users
+    user = users.find_one({"_id": credentials.username})
+    if user is None:
+        raise_basic_exception()
+    if not verify_pass_hash(credentials.password.encode("utf-8"), user["pass_hash"]):
+        raise_basic_exception()
 
 
 @app.get("/")
 def root(credentials: HTTPBasicCredentials = Depends(security)):
     check_creds(credentials)
-    return f"Random string from api {randint(0, 10000)}"
+    return f"Hello {credentials.username}!"
+
+
+@app.post("/user", status_code=status.HTTP_201_CREATED)
+def create_user(user: User):
+    database = client.flush
+    users = database.users
+    pass_hash = hash_password(user.password)
+    try:
+        users.insert_one({"_id": user.username, "pass_hash": pass_hash})
+    except pymongo.errors.DuplicateKeyError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="User already exists"
+        ) from e
+    return user.username
+
+
+@app.delete("/user", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(credentials: HTTPBasicCredentials = Depends(security)):
+    check_creds(credentials)
+    database = client.flush
+    users = database.users
+    try:
+        result = users.delete_one({"_id": credentials.username})
+        if result.deleted_count != 1:
+            raise Exception("User not deleted")
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Error while deleting account",
+        ) from e
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.get("/healthz", status_code=status.HTTP_200_OK)
