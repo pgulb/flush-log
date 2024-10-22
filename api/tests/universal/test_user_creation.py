@@ -1,6 +1,7 @@
 import httpx
 from fastapi import status
 from fastapi.testclient import TestClient
+from universal.helpers import create_user
 
 from api.db import hash_password, verify_pass_hash
 from api.main import app
@@ -9,14 +10,11 @@ client = TestClient(app)
 
 
 def test_create_user():
-    response = client.post("/user", json={"username": "test", "password": "testtest"})
-    assert response.status_code == status.HTTP_201_CREATED
+    create_user(client, "test", "testtest")
 
 
 def test_create_user_fail_on_existing():
-    response = client.post(
-        "/user", json={"username": "existing", "password": "testtest"}
-    )
+    create_user(client, "existing", "testtest")
     response = client.post(
         "/user", json={"username": "existing", "password": "testtest"}
     )
@@ -65,10 +63,7 @@ def test_verify_pass_hash_after_create():
         "testhash5": "vqE´Ê.;Ì³Ìøò¼Î¼/O¤ýúPly¦S3¯JkÁQ¨e*ÀC§(îN®Ä#i¶¤¼ÖWÒ",  # noqa: RUF001
     }
     for test_user in test_users.keys():
-        response = client.post(
-            "/user", json={"username": test_user, "password": test_users[test_user]}
-        )
-        assert response.status_code == status.HTTP_201_CREATED
+        create_user(client, test_user, test_users[test_user])
         assert verify_pass_hash(
             test_users[test_user], hash_password(test_users[test_user])
         )
@@ -77,10 +72,7 @@ def test_verify_pass_hash_after_create():
 def test_verify_pass_hash_fail():
     test_pass = "tetetetetetesciwo123"
     hash_pass = hash_password(test_pass)
-    response = client.post(
-        "/user", json={"username": "failhash", "password": test_pass}
-    )
-    assert response.status_code == status.HTTP_201_CREATED
+    create_user(client, "failhash", test_pass)
     assert not verify_pass_hash("wrongpass", hash_pass)
     assert not verify_pass_hash("alsowrong", hash_pass)
     assert not verify_pass_hash("Tetetetetetesciwo123", hash_pass)
@@ -93,10 +85,7 @@ def test_getting_root_as_user():
         "testlogin3": "Z3Þ<ìla%f'bYdëlwÌNy^øíó»6äujgF©·",
     }
     for test_user in test_users.keys():
-        response = client.post(
-            "/user", json={"username": test_user, "password": test_users[test_user]}
-        )
-        assert response.status_code == status.HTTP_201_CREATED
+        create_user(client, test_user, test_users[test_user])
         auth = httpx.BasicAuth(username=test_user, password=test_users[test_user])
         response = client.get("/", auth=auth)
         assert response.status_code == status.HTTP_200_OK

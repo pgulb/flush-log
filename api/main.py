@@ -1,6 +1,7 @@
 import logging
 import os
 
+import dateutil
 import fastapi
 import pymongo
 from db import create_mock_client, create_mongo_client, hash_password, verify_pass_hash
@@ -8,7 +9,7 @@ from fastapi import Depends, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasicCredentials
 from httpbasic import HTTPBasic
-from models import User
+from models import Flush, User
 
 app = fastapi.FastAPI()
 origins = [
@@ -24,12 +25,13 @@ app.add_middleware(
 security = HTTPBasic()
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(asctime)s %(message)s")
+logging.getLogger("passlib").setLevel(logging.ERROR)
 
 mongo_setting = os.getenv("MONGO_URL")
 if mongo_setting is None:
     raise ValueError("MONGO_URL not set")
 if mongo_setting == "mock":
-    client = create_mock_client(os.getenv("MOCK_NOT_AVAILABLE"))
+    client = create_mock_client()
     logging.info("Using mock client")
 else:
     client = create_mongo_client(mongo_setting)
@@ -44,6 +46,14 @@ def raise_basic_exception():
         detail="Incorrect username or password",
         headers={"WWW-Authenticate": "Basic"},
     )
+
+
+def filter_from_flush(credentials: HTTPBasicCredentials, flush: Flush) -> dict:
+    return {
+        "time_start": dateutil.parser.isoparse(flush.time_start),
+        "time_end": dateutil.parser.isoparse(flush.time_end),
+        "user_id": credentials.username,
+    }
 
 
 def check_creds(credentials: HTTPBasicCredentials):
@@ -91,6 +101,51 @@ def delete_user(credentials: HTTPBasicCredentials = Depends(security)):
             detail="Error while deleting account",
         ) from e
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.put("/flush", status_code=status.HTTP_201_CREATED)
+def create_update_flush(
+    flush: Flush, credentials: HTTPBasicCredentials = Depends(security)
+):
+    check_creds(credentials)
+    flushes = client.flush.flushes
+    try:
+        result = flushes.update_one(
+            filter=filter_from_flush(credentials, flush),
+            update={
+                "$set": {
+                    "time_start": dateutil.parser.isoparse(flush.time_start),
+                    "time_end": dateutil.parser.isoparse(flush.time_end),
+                    "user_id": credentials.username,
+                    "rating": flush.rating,
+                    "note": flush.note,
+                    "phone_used": flush.phone_used,
+                }
+            },
+            upsert=True,
+        )
+        if result.matched_count == 1:
+            return Response(flush.time_start, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Error adding flush"
+        ) from e
+    return flush.time_start
+
+
+@app.delete("/flush", status_code=status.HTTP_204_NO_CONTENT)
+def delete_flush(flush: Flush, credentials: HTTPBasicCredentials = Depends(security)):
+    check_creds(credentials)
+    flushes = client.flush.flushes
+    try:
+        result = flushes.delete_one(filter=filter_from_flush(credentials, flush))
+        if result.deleted_count != 1:
+            raise Exception("Flush not deleted")
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Error deleting flush"
+        ) from e
+    return flush.time_start
 
 
 @app.get("/healthz", status_code=status.HTTP_200_OK)
