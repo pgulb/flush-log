@@ -44,7 +44,7 @@ class MockClient:
     def find_one(self, document: dict) -> dict:
         if document["_id"] in self.users_collection.keys():
             return self.users_collection[document["_id"]]
-        raise Exception("Document not found")
+        return None
 
 
 def hash_password(password: str) -> str:
