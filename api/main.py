@@ -72,6 +72,20 @@ def root(credentials: HTTPBasicCredentials = Depends(security)):
     return f"Hello {credentials.username}!"
 
 
+@app.get("/healthz", status_code=status.HTTP_200_OK)
+def healthz():
+    return "OK"
+
+
+@app.get("/readyz", status_code=status.HTTP_200_OK)
+def readyz():
+    try:
+        client.admin.command("ping")
+    except Exception:
+        return Response("NOT OK", status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
+    return "OK"
+
+
 @app.post("/user", status_code=status.HTTP_201_CREATED)
 def create_user(user: User):
     database = client.flush
@@ -148,15 +162,17 @@ def delete_flush(flush: Flush, credentials: HTTPBasicCredentials = Depends(secur
     return flush.time_start
 
 
-@app.get("/healthz", status_code=status.HTTP_200_OK)
-def healthz():
-    return "OK"
-
-
-@app.get("/readyz", status_code=status.HTTP_200_OK)
-def readyz():
+@app.get("/flushes", status_code=status.HTTP_200_OK)
+def get_flushes(credentials: HTTPBasicCredentials = Depends(security)):
+    check_creds(credentials)
+    flushes = client.flush.flushes
     try:
-        client.admin.command("ping")
-    except Exception:
-        return Response("NOT OK", status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
-    return "OK"
+        entries = [x for x in flushes.find(filter={"user_id": credentials.username})]
+        for entry in entries:
+            del entry["_id"]
+            del entry["user_id"]
+        return entries
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Error getting flushes"
+        ) from e
