@@ -31,4 +31,4 @@ jobs:
         run: |
           echo ${{ secrets.FROG_KEY }} | base64 -d > frog &&
           chmod 600 frog &&
-          ssh -o StrictHostKeyChecking=no -i frog ${{ secrets.FROG_ADDRESS }} -p${{ secrets.FROG_PORT }} "docker run -d -p 30149:6789 -e MONGO_URL="${{ secrets.MONGO_URL }}" --name flush-log-api --restart=unless-stopped ghcr.io/pgulb/flush-log:api"
+          ssh -o StrictHostKeyChecking=no -i frog ${{ secrets.FROG_ADDRESS }} -p${{ secrets.FROG_PORT }} "docker run -d -p 30149:6789 -e MONGO_URL='${{ secrets.MONGO_URL }}' --name flush-log-api --restart=unless-stopped ghcr.io/pgulb/flush-log:api"
