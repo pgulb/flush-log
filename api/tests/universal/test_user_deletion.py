@@ -1,6 +1,7 @@
 import httpx
 from fastapi import status
 from fastapi.testclient import TestClient
+from universal.helpers import create_user
 
 from api.main import app
 
@@ -14,10 +15,7 @@ def test_delete_user_after_create():
         "testdelete3": "_|â³¿]d®²QæºãÖC¡4[$ãþÞj?O#é@×),÷µ¯ØwU¾ÃW+&Æ?Í¼7MhÔbÝAAv",  # noqa: RUF001
     }
     for test_user in test_users.keys():
-        response = client.post(
-            "/user", json={"username": test_user, "password": test_users[test_user]}
-        )
-        assert response.status_code == status.HTTP_201_CREATED
+        create_user(client, test_user, test_users[test_user])
         auth = httpx.BasicAuth(username=test_user, password=test_users[test_user])
         response = client.delete("/user", auth=auth)
         assert response.status_code == status.HTTP_204_NO_CONTENT
@@ -29,10 +27,7 @@ def test_try_delete_with_wrong_creds():
         "testdeletewrongcreds2": r"Áð/%§À~æMè'Cô.<'p¿JNaöm}ßÖ4ÚÞRcÇ¬HÏ?À¸*f3Mèï(ÖÓwUÈø]ÛVKÕEÛxí",  # noqa: E501, RUF001
     }
     for test_user in test_users.keys():
-        response = client.post(
-            "/user", json={"username": test_user, "password": test_users[test_user]}
-        )
-        assert response.status_code == status.HTTP_201_CREATED
+        create_user(client, test_user, test_users[test_user])
         auth = httpx.BasicAuth(username=test_user, password="notarealpasswordlololol")
         response = client.delete("/user", auth=auth)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
