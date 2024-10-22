@@ -4,7 +4,7 @@ from random import randint
 
 import fastapi
 import pymongo
-from db import create_mock_client, create_mongo_client
+from db import create_mock_client, create_mongo_client, hash_password
 from fastapi import Depends, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -57,8 +57,9 @@ def root(credentials: HTTPBasicCredentials = Depends(security)):
 def create_user(user: User):
     database = client.flush
     users = database.users
+    pass_hash = hash_password(user.password)
     try:
-        users.insert_one({"_id": user.username, "pass_hash": user.password})
+        users.insert_one({"_id": user.username, "pass_hash": pass_hash})
     except pymongo.errors.DuplicateKeyError as e:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="User already exists"
