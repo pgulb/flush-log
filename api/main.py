@@ -76,6 +76,23 @@ def create_user(user: User):
     return user.username
 
 
+@app.delete("/user", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(credentials: HTTPBasicCredentials = Depends(security)):
+    check_creds(credentials)
+    database = client.flush
+    users = database.users
+    try:
+        result = users.delete_one({"_id": credentials.username})
+        if result.deleted_count != 1:
+            raise Exception("User not deleted")
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Error while deleting account",
+        ) from e
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @app.get("/healthz", status_code=status.HTTP_200_OK)
 def healthz():
     return "OK"
