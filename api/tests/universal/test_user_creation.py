@@ -1,3 +1,4 @@
+import httpx
 from fastapi import status
 from fastapi.testclient import TestClient
 
@@ -57,11 +58,11 @@ def test_create_user_fail_bad_chars_username():
 
 def test_verify_pass_hash_after_create():
     test_users = {
-        "testhash": r"woeirujghwgr023uh4g039hr",
-        "testhash2": r"jhsdfhgsdnvnvnb_!@_#>?<><>?!!@#\\\\////",
-        "testhash3": r"testtest3",
-        "testhash4": r"*å¤^I!]°3Ãdké=Nçß\{»gü|2Cñ²Ñ4«Ç.gÄ{\"!Áý|$ÁflÄù¢2qBáÇzLR·à(",
-        "testhash5": r"vqE´Ê.;Ì³Ìøò¼Î¼/O¤ýúPly¦S3¯JkÁQ¨e*ÀC§(îN®Ä#i¶¤¼ÖWÒ",  # noqa: RUF001
+        "testhash": "woeirujghwgr023uh4g039hr",
+        "testhash2": "jhsdfhgsdnvnvnb_!@_#>?<><>?!!@#\\\\////",
+        "testhash3": "testtest3",
+        "testhash4": r'*å¤^I!]°3Ãdké=Nçß\{»gü|2Cñ²Ñ4«Ç.gÄ{"!Áý|$ÁflÄù¢2qBáÇzLR·à(',
+        "testhash5": "vqE´Ê.;Ì³Ìøò¼Î¼/O¤ýúPly¦S3¯JkÁQ¨e*ÀC§(îN®Ä#i¶¤¼ÖWÒ",  # noqa: RUF001
     }
     for test_user in test_users.keys():
         response = client.post(
@@ -83,3 +84,20 @@ def test_verify_pass_hash_fail():
     assert not verify_pass_hash("wrongpass", hash_pass)
     assert not verify_pass_hash("alsowrong", hash_pass)
     assert not verify_pass_hash("Tetetetetetesciwo123", hash_pass)
+
+
+def test_getting_root_as_user():
+    test_users = {
+        "testlogin": '§hÊÑZ¥B=G¢lýi¦Ã¨,ÞõWå®n/½ÚN"Z-Ô<',
+        "testlogin2": "ÓÉÑéúíòæ,&qjá'géø¦½2¹¢ÎQöIgK?¢G{",
+        "testlogin3": "Z3Þ<ìla%f'bYdëlwÌNy^øíó»6äujgF©·",
+    }
+    for test_user in test_users.keys():
+        response = client.post(
+            "/user", json={"username": test_user, "password": test_users[test_user]}
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        auth = httpx.BasicAuth(username=test_user, password=test_users[test_user])
+        response = client.get("/", auth=auth)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.text == f'"Hello {test_user}!"'
