@@ -59,22 +59,25 @@ type registerContainer struct {
 }
 func (r *registerContainer) Render() app.UI {
 	return app.Div().Body(
+		app.Div().Body(
 		app.P().Text("Register").Class("font-bold"),
 		app.Input().Type("text").ID("register-username").Placeholder("Username").Class(
-			"m-2 placeholder-gray-800",
+			"m-2 placeholder-gray-500",
 		),
 		app.Br(),
 		app.Input().Type("password").ID("register-password").Placeholder("Password").Class(
-			"m-2 placeholder-gray-800",
+			"m-2 placeholder-gray-500",
 		),
 		app.Br(),
 		app.Input().Type("password").ID("register-password-repeat").Placeholder(
 			"Repeat password").Class(
-			"m-2 placeholder-gray-800 my-4",
+			"m-2 placeholder-gray-500 my-4",
 		),
 		app.Br(),
 		&buttonRegister{},
-	).Class(inviCss).ID("register-container")
+		app.P().Text("").Class("text-red-500").ID("register-error"),
+	).Class(inviCss).ID("register-container"),
+	)
 }
 
 type rootContainer struct {
@@ -91,7 +94,7 @@ func (b *rootContainer) OnMount(ctx app.Context) {
 		ctx.Async(func() {
 			m, err := getFlushesFromApi(ctx)
 			if err != nil {
-				showErrorDiv(ctx, err)
+				showErrorDiv(ctx, err, 1)
 			} else {
 				app.Window().GetElementByID("fetched-flushes").Set("innerHTML", m)
 			}
@@ -141,11 +144,11 @@ func (l *loginContainer) Render() app.UI {
 		app.P().Text("Log in to continue.").Class("font-bold"),
 		app.Div().Body(
 			app.Input().Type("text").ID("username").Placeholder("Username").Class(
-				"m-2 placeholder-gray-800",
+				"m-2 placeholder-gray-500",
 			),
 			app.Br(),
 			app.Input().Type("password").ID("password").Placeholder("Password").Class(
-				"m-2 placeholder-gray-800",
+				"m-2 placeholder-gray-500",
 			),
 			app.Br(),
 			app.Div().Body(
@@ -180,21 +183,16 @@ func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 	}
 	lastCreds := lastTriedCreds{}
 	ctx.GetState("lastUsedCreds", &lastCreds)
-	user := app.Window().GetElementByID("username").Get("value").String()
-	pass := app.Window().GetElementByID("password").Get("value").String()
-	if user == "" || pass == "" {
-		showErrorDiv(ctx, errors.New("username and password required"))
-		return
-	}
-	if lastCreds.User == user && lastCreds.Password == pass {
-		log.Println("Skipping last used credentials...")
-		showErrorDiv(ctx, errors.New("you already tried those credentials"))
+	user, pass := getLoginCreds()
+	err := validateLoginCreds(user, pass, lastCreds)
+	if err != nil {
+		showErrorDiv(ctx, err, 1)
 		return
 	}
 	ctx.Async(func() {
 		status, basic_auth, err := tryLogin(user, pass)
 		if err != nil {
-			showErrorDiv(ctx, err)
+			showErrorDiv(ctx, err, 1)
 		}
 		switch status {
 		case 200:
@@ -206,13 +204,13 @@ func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 			app.Window().Set("location", ".")
 			ctx.DelState("lastUsedCreds")
 		case 401:
-			showErrorDiv(ctx, errors.New("invalid credentials"))
+			showErrorDiv(ctx, errors.New("invalid credentials"), 1)
 			ctx.SetState("lastUsedCreds", lastTriedCreds{
 				User: user,
 				Password: pass,
 			}).ExpiresIn(time.Second * 10)
 		default:
-			showErrorDiv(ctx, errors.New("login failed"))
+			showErrorDiv(ctx, errors.New("login failed"), 1)
 			ctx.DelState("lastUsedCreds")
 		}
 })
@@ -228,26 +226,16 @@ func (b *buttonRegister) onClick(ctx app.Context, e app.Event) {
 	log.Println("Trying to register...")
 	lastCreds := lastTriedCreds{}
 	ctx.GetState("lastUsedCredsRegister", &lastCreds)
-	user := app.Window().GetElementByID("register-username").Get("value").String()
-	pass := app.Window().GetElementByID("register-password").Get("value").String()
-	repeatPass := app.Window().GetElementByID("register-password-repeat").Get("value").String()
-	if user == "" || pass == "" || repeatPass == "" {
-		showErrorDiv(ctx, errors.New("fill all required fields"))
-		return
-	}
-	if pass != repeatPass {
-		showErrorDiv(ctx, errors.New("passwords don't match"))
-		return
-	}
-	if lastCreds.User == user && lastCreds.Password == pass {
-		log.Println("Skipping last used credentials...")
-		showErrorDiv(ctx, errors.New("you already tried those credentials"))
+	user, pass, repeatPass := getRegisterCreds()
+	err := validateRegistryCreds(user, pass, repeatPass, lastCreds)
+	if err != nil {
+		showErrorDiv(ctx, err, 1)
 		return
 	}
 	ctx.Async(func() {
 		status, basic_auth, err := tryRegister(user, pass)
 		if err != nil {
-			showErrorDiv(ctx, err)
+			showErrorDiv(ctx, err, 1)
 		}
 		switch status {
 		case 201:
@@ -258,19 +246,13 @@ func (b *buttonRegister) onClick(ctx app.Context, e app.Event) {
 			ctx.DelState("lastUsedCredsRegister")
 			app.Window().Set("location", ".")
 		case 422:
-			showErrorDiv(ctx, errors.New("invalid username or password"))
-			ctx.SetState("lastUsedCredsRegister", lastTriedCreds{
-				User: user,
-				Password: pass,
-			}).ExpiresIn(time.Second * 10)
+			showBadRegisterCredsErr()
+			setLastUsedCredsState(ctx, user, pass)
 		case 409:
-			showErrorDiv(ctx, errors.New("username already exists"))
-			ctx.SetState("lastUsedCredsRegister", lastTriedCreds{
-				User: user,
-				Password: pass,
-			}).ExpiresIn(time.Second * 10)
+			showErrorDiv(ctx, errors.New("username already exists"), 1)
+			setLastUsedCredsState(ctx, user, pass)
 		default:
-			showErrorDiv(ctx, errors.New("register failed"))
+			showErrorDiv(ctx, errors.New("register failed"), 1)
 			ctx.DelState("lastUsedCredsRegister")
 		}
 })
@@ -352,6 +334,59 @@ func tryRegister(username string, password string) (int, string, error) {
 	return r.StatusCode, basic_auth, nil
 }
 
+func setLastUsedCredsState(ctx app.Context, user string, pass string) {
+	ctx.SetState("lastUsedCredsRegister", lastTriedCreds{
+		User: user,
+		Password: pass,
+	}).ExpiresIn(time.Second * 10)
+}
+
+func validateRegistryCreds(
+	user string, pass string, repeatPass string, lastCreds lastTriedCreds) error {
+	if user == "" || pass == "" || repeatPass == "" {
+		return errors.New("fill all required fields")
+	}
+	if pass != repeatPass {
+		return errors.New("passwords don't match")
+	}
+	if lastCreds.User == user && lastCreds.Password == pass {
+		log.Println("Skipping last used credentials...")
+		return errors.New("you already tried those credentials")
+	}
+	return nil
+}
+
+func validateLoginCreds(
+	user string, pass string, lastCreds lastTriedCreds) (error) {
+		if user == "" || pass == "" {
+			return errors.New("username and password required")
+		}
+		if lastCreds.User == user && lastCreds.Password == pass {
+			log.Println("Skipping last used credentials...")
+			return errors.New("you already tried those credentials")
+		}
+	return nil
+}
+
+func getRegisterCreds() (string, string, string) {
+	user := app.Window().GetElementByID("register-username").Get("value").String()
+	pass := app.Window().GetElementByID("register-password").Get("value").String()
+	repeatPass := app.Window().GetElementByID("register-password-repeat").Get("value").String()
+	return user, pass, repeatPass
+}
+
+func getLoginCreds() (string, string) {
+	user := app.Window().GetElementByID("username").Get("value").String()
+	pass := app.Window().GetElementByID("password").Get("value").String()
+	return user, pass
+}
+
+func showBadRegisterCredsErr() {
+	app.Window().GetElementByID(
+		"register-error").Set(
+		"innerHTML", "username: up to 60 chars, (letters, numbers and _),<br/>password: 8-60 chars")
+}
+
 func getFlushesFromApi(ctx app.Context) (string, error) {
 	apiUrl, err := getApiUrl()
 	if err != nil {
@@ -385,11 +420,11 @@ func displayError(err error) {
 	log.Fatal(err)
 }
 
-func showErrorDiv(ctx app.Context, err error) {
+func showErrorDiv(ctx app.Context, err error, seconds time.Duration) {
 	app.Window().GetElementByID("error").Set("innerHTML", err.Error())
 	app.Window().GetElementByID("error").Set("className", errorDivCss)
 	ctx.Async(func() {
-		time.Sleep(time.Second * 1)
+		time.Sleep(time.Second * seconds)
 		app.Window().GetElementByID("error").Set("className", inviCss)
 	})
 	// TODO consider using https://developer.mozilla.org/en-US/docs/Web/API/Node/cloneNode
