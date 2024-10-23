@@ -13,9 +13,11 @@ import (
 )
 
 const (
-	yellowButtonCss = "font-bold bg-yellow-500 p-2 rounded text-white"
+	yellowButtonCss = "font-bold bg-yellow-500 p-2 rounded text-white mx-1"
 	errorDivCss = "flex flex-row fixed bottom-4 left-4 bg-red-500 text-white p-4 text-xl rounded-lg"
 	centeringDivCss = "flex flex-row min-h-screen justify-center items-center"
+	registerDivCss = "p-4 text-center text-xl shadow-lg bg-white rounded-lg mx-10"
+	inviCss = "fixed invisible"
 )
 
 type creds struct {
@@ -36,8 +38,41 @@ func (e *ErrorContainer) Render() app.UI {
 		app.P().Text("placeholder error")).Class(
 			"p-8 text-center text-xl shadow-lg bg-white rounded-lg",
 		)).Class(
-			"fixed invisible",
+			inviCss,
 			).ID("error")
+}
+
+type buttonShowRegister struct {
+	app.Compo
+}
+func (b *buttonShowRegister) Render() app.UI {
+	return app.Button().Text("I need account").OnClick(b.onClick).Class(yellowButtonCss)
+}
+func (b *buttonShowRegister) onClick(ctx app.Context, e app.Event) {
+	app.Window().GetElementByID("register-container").Set("className", registerDivCss)
+}
+
+type registerContainer struct {
+	app.Compo
+}
+func (r *registerContainer) Render() app.UI {
+	return app.Div().Body(
+		app.H2().Text("Register").Class("text-xl"),
+		app.Input().Type("text").ID("register-username").Placeholder("Username").Class(
+			"m-2 placeholder-gray-800",
+		),
+		app.Br(),
+		app.Input().Type("password").ID("register-password").Placeholder("Password").Class(
+			"m-2 placeholder-gray-800",
+		),
+		app.Br(),
+		app.Input().Type("password").ID("register-password-repeat").Placeholder(
+			"Repeat password").Class(
+			"m-2 placeholder-gray-800",
+		),
+		app.Br(),
+		&buttonRegister{},
+	).Class(inviCss).ID("register-container")
 }
 
 type rootContainer struct {
@@ -116,9 +151,13 @@ func (l *loginContainer) Render() app.UI {
 				app.Label().For("remember-me").Text("Remember me").Class("p-2"),
 			),
 			app.Br(),
-			&buttonLogin{},
+			app.Div().Body(
+				&buttonLogin{},
+				&buttonShowRegister{},
+			),
 		),
 	).Class("p-4 text-center text-xl shadow-lg bg-white rounded-lg"),
+	&registerContainer{},
 	app.Div().Body(&ErrorContainer{})).Class(
 		centeringDivCss)
 }
@@ -175,6 +214,16 @@ func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 			ctx.DelState("lastUsedCreds")
 		}
 })
+}
+
+type buttonRegister struct {
+	app.Compo
+}
+func (b *buttonRegister) Render() app.UI {
+	return app.Button().Text("Register").OnClick(b.onClick).Class(yellowButtonCss)
+}
+func (b *buttonRegister) onClick(ctx app.Context, e app.Event) {
+	app.Window().Set("location", "register")
 }
 
 type buttonLogout struct {
@@ -264,9 +313,12 @@ func showErrorDiv(ctx app.Context, err error) {
 	app.Window().GetElementByID("error").Set("innerHTML", err.Error())
 	app.Window().GetElementByID("error").Set("className", errorDivCss)
 	ctx.Async(func() {
-		time.Sleep(time.Second * 2)
-		app.Window().GetElementByID("error").Set("className", "fixed invisible")
+		time.Sleep(time.Second * 1)
+		app.Window().GetElementByID("error").Set("className", inviCss)
 	})
+	// TODO consider using https://developer.mozilla.org/en-US/docs/Web/API/Node/cloneNode
+	// clone the element and set random ID to clone
+	// then hide the clone after 2 seconds
 }
 
 func main() {
