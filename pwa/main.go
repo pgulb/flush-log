@@ -57,7 +57,7 @@ type registerContainer struct {
 }
 func (r *registerContainer) Render() app.UI {
 	return app.Div().Body(
-		app.H2().Text("Register").Class("text-xl"),
+		app.P().Text("Register").Class("font-bold"),
 		app.Input().Type("text").ID("register-username").Placeholder("Username").Class(
 			"m-2 placeholder-gray-800",
 		),
@@ -68,7 +68,7 @@ func (r *registerContainer) Render() app.UI {
 		app.Br(),
 		app.Input().Type("password").ID("register-password-repeat").Placeholder(
 			"Repeat password").Class(
-			"m-2 placeholder-gray-800",
+			"m-2 placeholder-gray-800 my-4",
 		),
 		app.Br(),
 		&buttonRegister{},
