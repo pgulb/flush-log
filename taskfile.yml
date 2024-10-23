@@ -8,10 +8,14 @@ tasks:
     cmds:
       - task cleanup
       - docker volume prune -af
-      - docker compose up --build
+      - docker compose up -d --build
+      - task logs
   cleanup:
     cmds:
       - docker compose down -v
+  logs:
+    cmds:
+      - docker compose logs -f
   test-api-mock:
     cmds:
       - uv run pytest tests/test_mock.py -v
