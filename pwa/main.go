@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -223,7 +225,55 @@ func (b *buttonRegister) Render() app.UI {
 	return app.Button().Text("Register").OnClick(b.onClick).Class(yellowButtonCss)
 }
 func (b *buttonRegister) onClick(ctx app.Context, e app.Event) {
-	app.Window().Set("location", "register")
+	log.Println("Trying to register...")
+	lastCreds := lastTriedCreds{}
+	ctx.GetState("lastUsedCredsRegister", &lastCreds)
+	user := app.Window().GetElementByID("register-username").Get("value").String()
+	pass := app.Window().GetElementByID("register-password").Get("value").String()
+	repeatPass := app.Window().GetElementByID("register-password-repeat").Get("value").String()
+	if user == "" || pass == "" || repeatPass == "" {
+		showErrorDiv(ctx, errors.New("fill all required fields"))
+		return
+	}
+	if pass != repeatPass {
+		showErrorDiv(ctx, errors.New("passwords don't match"))
+		return
+	}
+	if lastCreds.User == user && lastCreds.Password == pass {
+		log.Println("Skipping last used credentials...")
+		showErrorDiv(ctx, errors.New("you already tried those credentials"))
+		return
+	}
+	ctx.Async(func() {
+		status, basic_auth, err := tryRegister(user, pass)
+		if err != nil {
+			showErrorDiv(ctx, err)
+		}
+		switch status {
+		case 201:
+			ctx.SetState("creds", creds{
+				UserColonPass: basic_auth,
+				LoggedIn:      true,
+			}).ExpiresIn(time.Second * time.Duration(604800)).PersistWithEncryption()
+			ctx.DelState("lastUsedCredsRegister")
+			app.Window().Set("location", ".")
+		case 422:
+			showErrorDiv(ctx, errors.New("invalid username or password"))
+			ctx.SetState("lastUsedCredsRegister", lastTriedCreds{
+				User: user,
+				Password: pass,
+			}).ExpiresIn(time.Second * 10)
+		case 409:
+			showErrorDiv(ctx, errors.New("username already exists"))
+			ctx.SetState("lastUsedCredsRegister", lastTriedCreds{
+				User: user,
+				Password: pass,
+			}).ExpiresIn(time.Second * 10)
+		default:
+			showErrorDiv(ctx, errors.New("register failed"))
+			ctx.DelState("lastUsedCredsRegister")
+		}
+})
 }
 
 type buttonLogout struct {
@@ -268,6 +318,32 @@ func tryLogin(username string, password string) (int, string, error) {
 		[]byte(username + ":" + password),
 	)
 	req.Header.Add("Authorization", "Basic "+basic_auth)
+	r, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return 0, "", err
+	}
+	defer closeBody(r)
+	return r.StatusCode, basic_auth, nil
+}
+
+func tryRegister(username string, password string) (int, string, error) {
+	apiUrl, err := getApiUrl()
+	if err != nil {
+		return 0, "", err
+	}
+	js := []byte(fmt.Sprintf(`
+	{
+		 "username": "%s",
+		  "password": "%s"
+	}
+	`, username, password))
+	req, err := http.NewRequest("POST", apiUrl+"/user", bytes.NewBuffer(js))
+	if err != nil {
+		return 0, "", err
+	}
+	basic_auth := base64.StdEncoding.EncodeToString(
+		[]byte(username + ":" + password),
+	)
 	r, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return 0, "", err
