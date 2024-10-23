@@ -23,6 +23,11 @@ type creds struct {
 	LoggedIn      bool
 }
 
+type lastTriedCreds struct {
+	User string
+	Password string
+}
+
 type ErrorContainer struct {
 	app.Compo
 }
@@ -122,22 +127,38 @@ func (b *buttonLogin) Render() app.UI {
 }
 func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 	log.Println("Logging in...")
+	lastCreds := lastTriedCreds{}
+	ctx.GetState("lastUsedCreds", &lastCreds)
 	user := app.Window().GetElementByID("username").Get("value").String()
 	pass := app.Window().GetElementByID("password").Get("value").String()
+	if lastCreds.User == user && lastCreds.Password == pass {
+		log.Println("Skipping last used credentials...")
+		showErrorDiv(ctx, errors.New("you already tried those credentials"))
+		return
+	}
 	ctx.Async(func() {
 		status, basic_auth, err := tryLogin(user, pass)
 		if err != nil {
 			showErrorDiv(ctx, err)
 		}
-		if status == 200 {
+		switch status {
+		case 200:
 			ctx.SetState("creds", creds{
 				UserColonPass: basic_auth,
 				LoggedIn:      true,
 			}).ExpiresIn(time.Second * 60).PersistWithEncryption()
 			app.Window().Set("location", ".")
-	} else {
-		showErrorDiv(ctx, errors.New("login failed"))
-	}
+			ctx.DelState("lastUsedCreds")
+		case 401:
+			showErrorDiv(ctx, errors.New("invalid credentials"))
+			ctx.SetState("lastUsedCreds", lastTriedCreds{
+				User: user,
+				Password: pass,
+			})
+		default:
+			showErrorDiv(ctx, errors.New("login failed"))
+			ctx.DelState("lastUsedCreds")
+		}
 })
 }
 
