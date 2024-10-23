@@ -111,6 +111,11 @@ func (l *loginContainer) Render() app.UI {
 				"m-2 placeholder-gray-800",
 			),
 			app.Br(),
+			app.Div().Body(
+				app.Input().Type("checkbox").ID("remember-me").Class("m-2"),
+				app.Label().For("remember-me").Text("Remember me").Class("p-2"),
+			),
+			app.Br(),
 			&buttonLogin{},
 		),
 	).Class("p-4 text-center text-xl shadow-lg bg-white rounded-lg"),
@@ -126,11 +131,20 @@ func (b *buttonLogin) Render() app.UI {
 		yellowButtonCss)
 }
 func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
-	log.Println("Logging in...")
+	loginSeconds := 60
+	log.Println("Trying to log in...")
+	if app.Window().GetElementByID("remember-me").Get("checked").Bool() {
+		log.Println("remember-me checked")
+		loginSeconds = 604800 // week
+	}
 	lastCreds := lastTriedCreds{}
 	ctx.GetState("lastUsedCreds", &lastCreds)
 	user := app.Window().GetElementByID("username").Get("value").String()
 	pass := app.Window().GetElementByID("password").Get("value").String()
+	if user == "" || pass == "" {
+		showErrorDiv(ctx, errors.New("username and password required"))
+		return
+	}
 	if lastCreds.User == user && lastCreds.Password == pass {
 		log.Println("Skipping last used credentials...")
 		showErrorDiv(ctx, errors.New("you already tried those credentials"))
@@ -146,7 +160,8 @@ func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 			ctx.SetState("creds", creds{
 				UserColonPass: basic_auth,
 				LoggedIn:      true,
-			}).ExpiresIn(time.Second * 60).PersistWithEncryption()
+			}).ExpiresIn(time.Second * time.Duration(loginSeconds)).PersistWithEncryption()
+			log.Printf("Logged in as %s\n for %v seconds!", user, loginSeconds)
 			app.Window().Set("location", ".")
 			ctx.DelState("lastUsedCreds")
 		case 401:
@@ -154,7 +169,7 @@ func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 			ctx.SetState("lastUsedCreds", lastTriedCreds{
 				User: user,
 				Password: pass,
-			})
+			}).ExpiresIn(time.Second * 10)
 		default:
 			showErrorDiv(ctx, errors.New("login failed"))
 			ctx.DelState("lastUsedCreds")
@@ -245,7 +260,7 @@ func displayError(err error) {
 	log.Fatal(err)
 }
 
-func showErrorDiv(ctx app.Context,err error) {
+func showErrorDiv(ctx app.Context, err error) {
 	app.Window().GetElementByID("error").Set("innerHTML", err.Error())
 	app.Window().GetElementByID("error").Set("className", errorDivCss)
 	ctx.Async(func() {
