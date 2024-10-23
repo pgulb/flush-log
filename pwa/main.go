@@ -52,6 +52,7 @@ func (b *buttonShowRegister) Render() app.UI {
 }
 func (b *buttonShowRegister) onClick(ctx app.Context, e app.Event) {
 	app.Window().GetElementByID("register-container").Set("className", registerDivCss)
+	app.Window().GetElementByID("login-container").Set("className", inviCss)
 }
 
 type registerContainer struct {
@@ -161,7 +162,8 @@ func (l *loginContainer) Render() app.UI {
 				&buttonShowRegister{},
 			),
 		),
-	).Class("p-4 text-center text-xl shadow-lg bg-white rounded-lg"),
+	).Class("p-4 text-center text-xl shadow-lg bg-white rounded-lg",
+	).ID("login-container"),
 	&registerContainer{},
 	app.Div().Body(&ErrorContainer{})).Class(
 		centeringDivCss)
