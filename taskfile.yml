@@ -41,6 +41,13 @@ tasks:
     cmds:
       - go test -v
     dir: pwa/test/unit
+  test-pwa-integration:
+    cmds:
+      - go mod download
+      - go test -v
+    dir: pwa/test/integration
+    env:
+      GOAPP_URL: http://localhost:8080
   init-uv-venv:
     cmds:
       - uv venv
