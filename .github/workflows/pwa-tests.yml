@@ -1,0 +1,38 @@
+name: Run PWA tests
+
+on:
+    workflow_run:
+        workflows:
+            - Build PWA image
+        types:
+            - completed
+
+jobs:
+  pwa-test:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:latest
+    services:
+      pwa:
+        image: ghcr.io/pgulb/flush-log:pwa
+        ports:
+          - 8080:8080
+        env:
+          GOAPP_PORT: ':8080'
+      api:
+        image: ghcr.io/pgulb/flush-log:api
+        ports:
+          - 6789:6789
+        env:
+          MONGO_URL: 'mock'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Go environment
+        uses: actions/setup-go@v5.0.2
+        with:
+          go-version: '1.23.2'
+      - name: Install go-task
+        run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
+      - name: run unit tests
+        run: task test-pwa-unit
