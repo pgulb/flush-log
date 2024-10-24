@@ -39,4 +39,4 @@ jobs:
       - name: run unit tests
         run: task test-pwa-unit
       - name: run integration tests
-        run: task test-pwa-integration
+        run: task test-pwa-integration-ci
