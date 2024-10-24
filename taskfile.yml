@@ -37,6 +37,10 @@ tasks:
     dir: api
     env:
       MONGO_URL: mongodb://mongo:27017
+  test-pwa-unit:
+    cmds:
+      - go test -v
+    dir: pwa/test/unit
   init-uv-venv:
     cmds:
       - uv venv

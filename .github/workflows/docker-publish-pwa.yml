@@ -2,9 +2,6 @@ name: Build PWA image
 
 on:
   push:
-    branches: [ "main" ]
-    tags:
-      - 'v*'
 
 env:
   REGISTRY: ghcr.io

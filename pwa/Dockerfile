@@ -2,8 +2,10 @@ FROM golang:1.23.2-alpine3.20 AS build
 WORKDIR /app
 ADD go.mod go.sum ./
 RUN go mod download
-ADD  main.go ./
-RUN GOARCH=amd64 GOOS=linux go build && GOARCH=wasm GOOS=js go build -o web/app.wasm
+ADD main/* ./main/
+ADD flush/* ./flush/
+RUN GOARCH=wasm GOOS=js go build -o web/app.wasm ./main/main.go && \
+GOARCH=amd64 GOOS=linux go build -o flush-log ./main/main.go
 
 FROM scratch
 WORKDIR /app
