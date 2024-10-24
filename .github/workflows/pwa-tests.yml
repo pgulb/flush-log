@@ -10,6 +10,7 @@ on:
 jobs:
   pwa-test:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     container:
       image: ghcr.io/go-rod/rod:v0.116.2
     services:
