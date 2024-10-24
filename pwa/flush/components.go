@@ -114,7 +114,7 @@ func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 			log.Println("Getting new API response...")
 			m, err := GetFlushesFromApi(ctx)
 			if err != nil {
-				
+				ShowErrorDiv(ctx, err, 1)
 			} else {
 				app.Window().GetElementByID("fetched-flushes").Set("innerHTML", m)
 			}
