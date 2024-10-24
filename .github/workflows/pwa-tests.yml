@@ -11,7 +11,7 @@ jobs:
   pwa-test:
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:latest
+      image: ghcr.io/go-rod/rod:v0.116.2
     services:
       pwa:
         image: ghcr.io/pgulb/flush-log:pwa

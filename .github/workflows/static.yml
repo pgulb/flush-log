@@ -3,7 +3,6 @@ name: Deploy static content to Pages
 on:
     workflow_run:
         workflows:
-            - Run API tests
             - Run PWA tests
         branches:
             - main
