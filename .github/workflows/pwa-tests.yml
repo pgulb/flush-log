@@ -4,8 +4,6 @@ on:
     workflow_run:
         workflows:
             - Build PWA image
-        branches:
-            - '*'
         types:
             - completed
 
