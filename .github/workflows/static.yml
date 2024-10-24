@@ -1,10 +1,14 @@
 name: Deploy static content to Pages
 
 on:
-  push:
-    branches: ["main"]
-
-  workflow_dispatch:
+    workflow_run:
+        workflows:
+            - Run API tests
+            - Run PWA tests
+        branches:
+            - main
+        types:
+            - completed
 
 permissions:
   contents: read
@@ -37,8 +41,8 @@ jobs:
           cd pwa &&
           mkdir -p ./app/web &&
           echo -n ${{ vars.FLUSH_API_URL }} > ./app/web/apiurl &&
-          GOARCH=wasm GOOS=js go build -o ./app/web/app.wasm &&
-          BUILD_STATIC=true go build &&
+          GOARCH=wasm GOOS=js go build -o ./app/web/app.wasm ./main/main.go &&
+          BUILD_STATIC=true go build -o ./flush-log ./main/main.go &&
           ./flush-log &&
           ls -ltrRa &&
           mv ./*.html ./*.webmanifest ./*.js ./*.css ./app &&
