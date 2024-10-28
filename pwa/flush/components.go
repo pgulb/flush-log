@@ -32,7 +32,8 @@ type buttonShowRegister struct {
 	app.Compo
 }
 func (b *buttonShowRegister) Render() app.UI {
-	return app.Button().Text("I need account").OnClick(b.onClick).Class(YellowButtonCss)
+	return app.Button().Text("I need account").OnClick(b.onClick).Class(
+		YellowButtonCss).ID("show-register")
 }
 func (b *buttonShowRegister) onClick(ctx app.Context, e app.Event) {
 	app.Window().GetElementByID("register-container").Set("className", RegisterDivCss)
@@ -206,7 +207,8 @@ type buttonRegister struct {
 	app.Compo
 }
 func (b *buttonRegister) Render() app.UI {
-	return app.Button().Text("Register").OnClick(b.onClick).Class(YellowButtonCss)
+	return app.Button().Text("Register").OnClick(b.onClick).Class(
+		YellowButtonCss).ID("register-button")
 }
 func (b *buttonRegister) onClick(ctx app.Context, e app.Event) {
 	log.Println("Trying to register...")
