@@ -4,33 +4,25 @@ import (
 	"testing"
 
 	"github.com/go-rod/rod"
-	"github.com/go-rod/rod/lib/proto"
 )
 
 func TestLoadPages(t *testing.T)() {
 	for _, url := range Endpoints() {
-		p, err := rod.New().MustConnect().Page(proto.TargetCreateTarget{
-			URL: url})
-		if err != nil {
-			t.Fatal(err)
-		}
+		b := rod.New().MustConnect()
+		p := b.MustPage(url)
 		p.MustWaitStable()
 		p.MustClose()
+		b.MustClose()
 	}
 }
 
 func TestCheckForErrorDivId(t *testing.T)() {
 	for _, url := range Endpoints() {
-		p, err := rod.New().MustConnect().Page(proto.TargetCreateTarget{
-			URL: url})
-		if err != nil {
-			t.Fatal(err)
-		}
+		b := rod.New().MustConnect()
+		p := b.MustPage(url)
 		p = p.MustWaitStable()
-		err = p.MustElement("#error").WaitInvisible()
-		if err != nil {
-			t.Fatal(err)
-		}
+		p.MustElement("#error").MustWaitInvisible()
 		p.MustClose()
+		b.MustClose()
 	}
 }
