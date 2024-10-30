@@ -12,9 +12,8 @@ func TestLoadPages(t *testing.T)() {
 		u := launcher.New().Bin(LauncherSystemBrowser()).MustLaunch()
 		b := rod.New().ControlURL(u).MustConnect()
 		p := b.MustPage(url)
-		p.MustWaitStable()
-		p.MustClose()
-		b.MustClose()
+		defer b.MustClose()
+		defer p.MustClose()
 	}
 }
 
@@ -23,9 +22,8 @@ func TestCheckForErrorDivId(t *testing.T)() {
 		u := launcher.New().Bin(LauncherSystemBrowser()).MustLaunch()
 		b := rod.New().ControlURL(u).MustConnect()
 		p := b.MustPage(url)
-		p = p.MustWaitStable()
+		defer b.MustClose()
+		defer p.MustClose()
 		p.MustElement("#error").MustWaitInvisible()
-		p.MustClose()
-		b.MustClose()
 	}
 }
