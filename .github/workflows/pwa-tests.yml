@@ -18,12 +18,22 @@ jobs:
           - 8080:8080
         env:
           GOAPP_PORT: ':8080'
+      mongo:
+        image: mongo:8.0.1-noble
+        options: >-
+          --health-cmd "echo 'db.runCommand("ping").ok' | mongosh --quiet"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          --name mongo_container
+        ports:
+          - 27017:27017
       api:
         image: ghcr.io/pgulb/flush-log:api
         ports:
           - 6789:6789
         env:
-          MONGO_URL: 'mock'
+          MONGO_URL: 'mongodb://mongo:27017/?connectTimeoutMS=3000&timeoutMS=4000&socketTimeoutMS=3000&serverSelectionTimeoutMS=4000'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,11 +47,15 @@ jobs:
         run: sudo sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
       - name: Install netcat
         run: sudo apt-get update && sudo apt-get install -y netcat-traditional
+      - name: wait for a while
+        run: sleep 15
       - name: check pwa with nc
         run: nc -vz localhost 8080
       - name: check api with nc
         run: nc -vz localhost 6789
-      - name: check api with curl
+      - name: check mongo with nc
+        run: nc -vz localhost 27017
+      - name: check api readiness with curl
         run: curl http://localhost:6789/readyz
       - name: run unit tests
         run: task test-pwa-unit
