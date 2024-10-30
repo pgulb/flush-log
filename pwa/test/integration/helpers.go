@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-rod/rod"
+	"github.com/go-rod/rod/lib/launcher"
 )
 
 func Endpoints() []string {
@@ -18,8 +19,18 @@ func Endpoints() []string {
 	}
 }
 
+func LauncherSystemBrowser() string {
+	path, has := launcher.LookPath()
+	if !has {
+		log.Fatal("browser not installed")
+	}
+	log.Println("using browser: ", path)
+	return path
+}
+
 func LoginPage() (*rod.Page, *rod.Browser) {
-	b := rod.New().MustConnect()
+    u := launcher.New().Bin(LauncherSystemBrowser()).MustLaunch()
+	b := rod.New().ControlURL(u).MustConnect()
 	p := b.MustPage(os.Getenv("GOAPP_URL")+"/login")
 	p = p.MustWaitStable()
 	return p, b
