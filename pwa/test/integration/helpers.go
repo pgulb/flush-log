@@ -33,6 +33,7 @@ func LoginPage() (*rod.Page, *rod.Browser) {
     u := launcher.New().Bin(LauncherSystemBrowser()).MustLaunch()
 	b := rod.New().ControlURL(u).MustConnect()
 	p := b.MustPage(os.Getenv("GOAPP_URL")+"/login")
+	p.MustWaitRequestIdle()
 	log.Println("return from LoginPage()")
 	return p, b
 }
