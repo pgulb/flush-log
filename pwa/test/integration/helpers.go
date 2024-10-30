@@ -32,7 +32,6 @@ func LoginPage() (*rod.Page, *rod.Browser) {
     u := launcher.New().Bin(LauncherSystemBrowser()).MustLaunch()
 	b := rod.New().ControlURL(u).MustConnect()
 	p := b.MustPage(os.Getenv("GOAPP_URL")+"/login")
-	p = p.MustWaitStable()
 	return p, b
 }
 
@@ -44,7 +43,6 @@ func Register(user string, pass string,
 	p.MustElement("#register-password").MustInput(pass)
 	p.MustElement("#register-password-repeat").MustInput(repeatPass)
 	p.MustElement("#register-button").MustClick()
-	p = p.MustWaitStable()
 	return p, b
 }
 
@@ -52,12 +50,10 @@ func RegisterDoubleClickButton(user string, pass string,
 	repeatPass string) (*rod.Page, *rod.Browser) {
 	p, b := Register(user, pass, repeatPass)
 	p.MustElement("#register-button").MustClick()
-	p = p.MustWaitStable()
 	return p, b
 }
 
 func CheckErrorDivText(p *rod.Page, text string) error {
-	p.MustWaitDOMStable()
 	e := p.MustElement("#error")
 	errText := e.MustProperty("innerHTML").String()
 	log.Printf("#error - '%s'\n", errText)
