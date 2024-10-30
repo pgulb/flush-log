@@ -3,6 +3,7 @@ package flush
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -113,4 +114,26 @@ func AuthorizedRequest(method string, url string,
 	}
 	req.Header.Add("Authorization", "Basic "+basicAuth)
 	return req, nil
+}
+
+func TryAddFlush(creds Creds, flush Flush) (int, error) {
+	apiUrl, err := GetApiUrl()
+	if err != nil {
+		return 0, err
+	}
+	js, err := json.Marshal(flush)
+	if err != nil {
+		return 0, err
+	}
+	req, err := http.NewRequest("PUT", apiUrl+"/flush", bytes.NewBuffer(js))
+	if err != nil {
+		return 0, err
+	}
+	req.Header.Add("Authorization", "Basic "+creds.UserColonPass)
+	r, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer CloseBody(r)
+	return r.StatusCode, nil
 }
