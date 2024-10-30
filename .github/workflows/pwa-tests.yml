@@ -11,8 +11,6 @@ jobs:
   pwa-test:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-#    container:
-#      image: ghcr.io/go-rod/rod:v0.116.2
     services:
       pwa:
         image: ghcr.io/pgulb/flush-log:pwa
@@ -33,10 +31,15 @@ jobs:
         uses: actions/setup-go@v5.0.2
         with:
           go-version: '1.23.2'
-      - name: Install curl
-        run: sudo apt-get update && sudo apt-get install -y curl
+      - name: Install curl and wget
+        run: sudo apt-get update && sudo apt-get install -y curl wget
       - name: Install go-task
         run: sudo sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
+      - name: install chrome
+        run : |
+          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo dpkg -i google-chrome-stable_current_amd64.deb || true
+          sudo apt-get --fix-broken install
       - name: run unit tests
         run: task test-pwa-unit
       - name: run integration tests
