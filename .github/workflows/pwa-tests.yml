@@ -37,10 +37,10 @@ jobs:
         run: sudo sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
       - name: install chromium
         run: sudo apt-get update && sudo apt-get install -y chromium-browser
-      - name: run which on chromium and chrome
+      - name: set chromium as default browser
         run: |
-          which chromium-browser
-          which google-chrome || true
+          sudo update-alternatives --install /usr/bin/x-www-browser x-www-browser /usr/bin/chromium-browser 500 &&
+          sudo update-alternatives --set x-www-browser /usr/bin/chromium-browser
       - name: run unit tests
         run: task test-pwa-unit
       - name: run integration tests
