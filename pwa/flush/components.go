@@ -3,7 +3,6 @@ package flush
 import (
 	"errors"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/maxence-charriere/go-app/v10/pkg/app"
@@ -181,6 +180,7 @@ func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 		status, basic_auth, err := TryLogin(user, pass)
 		if err != nil {
 			ShowErrorDiv(ctx, err, 1)
+			return
 		}
 		switch status {
 		case 200:
@@ -269,9 +269,11 @@ func (c *NewFlushContainer) Render() app.UI {
 			app.Div().Body(
 				app.P().Text("Add new flush").Class("font-bold"),
 				app.Br(),
+				app.Label().For("new-flush-time-start").Text("Start:").Class("m-2"),
 				app.Input().Type("datetime-local",
 				).ID("new-flush-time-start").Class("m-2"),
 				app.Br(),
+				app.Label().For("new-flush-time-end").Text("End:").Class("m-2"),
 				app.Input().Type("datetime-local",
 				).ID("new-flush-time-end").Class("m-2"),
 				app.Br(),
@@ -294,13 +296,14 @@ func (c *NewFlushContainer) Render() app.UI {
 				app.Br(),
 				app.Hr(),
 				app.Textarea().Placeholder("note here").ID(
-					"new-flush-note"),
+					"new-flush-note").MaxLength(100),
 				app.Br(),
 				&SubmitFlushButton{},
 			).Class("p-4 text-center text-xl shadow-lg bg-white rounded-lg"),
 			app.Br(),
 			&BackButton{},
 		).Class("flex flex-col"),
+		app.Div().Body(&ErrorContainer{}),
 	).Class(CenteringDivCss)
 }
 func (c *NewFlushContainer) OnMount(ctx app.Context) {
@@ -339,36 +342,33 @@ func (b *SubmitFlushButton) onClick(ctx app.Context, e app.Event) {
 		app.Window().Set("location", "login")
 		return
 	}
-	timeStart, err := time.Parse("2006-01-02T15:04", app.Window().GetElementByID(
-		"new-flush-time-start").Get("value").String())
+	flush, err := NewFLush(ctx,
+		app.Window().GetElementByID("new-flush-time-start").Get("value").String(),
+		app.Window().GetElementByID("new-flush-time-end").Get("value").String(),
+		app.Window().GetElementByID("new-flush-rating").Get("value").String(),
+		app.Window().GetElementByID("new-flush-phone-used").Get("checked").Bool(),
+		app.Window().GetElementByID("new-flush-note").Get("value").String())
+	if err != nil {
+		ShowErrorDiv(ctx, err, 2)
+		return
+	}
+	err = ValidateFlush(flush)
 	if err != nil {
 		ShowErrorDiv(ctx, err, 1)
+		return
 	}
-	timeEnd, err := time.Parse("2006-01-02T15:04", app.Window().GetElementByID(
-		"new-flush-time-end").Get("value").String())
-	if err != nil {
-		ShowErrorDiv(ctx, err, 1)
-	}
-	rating, err := strconv.Atoi(app.Window().GetElementByID(
-		"new-flush-rating").Get("value").String())
-	if err != nil {
-		ShowErrorDiv(ctx, err, 1)
-	}
-	flush := Flush{
-		TimeStart: timeStart,
-		TimeEnd:   timeEnd,
-		Rating:    rating,
-		PhoneUsed: app.Window().GetElementByID("new-flush-phone-used").Get("checked").Bool(),
-		Note:      app.Window().GetElementByID("new-flush-note").Get("value").String(),
-		}
-	log.Println("New flush: ", flush)
 	ctx.Async(func() {
 		statusCode, err := TryAddFlush(creds, flush)
 		log.Println("Flush add statusCode: ", statusCode)
 		if err != nil {
 			ShowErrorDiv(ctx, err, 2)
-		} else {
-			app.Window().Set("location", ".")
+			return
 		}
-		})
-	}
+		switch statusCode {
+		case 201, 204:
+			app.Window().Set("location", ".")
+		default:
+			ShowErrorDiv(ctx, errors.New("Unexpected error while adding flush"), 2)
+		}
+	})
+}
