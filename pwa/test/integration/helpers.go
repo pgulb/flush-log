@@ -29,28 +29,33 @@ func LauncherSystemBrowser() string {
 }
 
 func LoginPage() (*rod.Page, *rod.Browser) {
+	log.Println("using LoginPage()")
     u := launcher.New().Bin(LauncherSystemBrowser()).MustLaunch()
 	b := rod.New().ControlURL(u).MustConnect()
 	p := b.MustPage(os.Getenv("GOAPP_URL")+"/login")
-	p = p.MustWaitStable()
+	log.Println("return from LoginPage()")
 	return p, b
 }
 
 func Register(user string, pass string,
 	repeatPass string) (*rod.Page, *rod.Browser) {
 	p, b := LoginPage()
+	log.Println("using Register()")
 	p.MustElement("#show-register").MustClick()
 	p.MustElement("#register-username").MustInput(user)
 	p.MustElement("#register-password").MustInput(pass)
 	p.MustElement("#register-password-repeat").MustInput(repeatPass)
 	p.MustElement("#register-button").MustClick()
+	log.Println("return from Register()")
 	return p, b
 }
 
 func RegisterDoubleClickButton(user string, pass string,
 	repeatPass string) (*rod.Page, *rod.Browser) {
 	p, b := Register(user, pass, repeatPass)
+	log.Println("using RegisterDoubleClickButton()")
 	p.MustElement("#register-button").MustClick()
+	log.Println("return from RegisterDoubleClickButton()")
 	return p, b
 }
 
