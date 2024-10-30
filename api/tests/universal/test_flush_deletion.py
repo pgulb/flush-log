@@ -32,7 +32,7 @@ def test_flush_delete():
         response = client.request(
             "DELETE",
             "/flush",
-            json={
+            params={
                 "time_start": "2012-01-19 17:00:00",
                 "time_end": f"2012-01-19 17:0{i}:00",
                 "rating": i,
@@ -53,7 +53,7 @@ def test_flush_delete_nonexistent_flush():
         response = client.request(
             "DELETE",
             "/flush",
-            json={
+            params={
                 "time_start": datetime.now().isoformat(timespec="minutes"),
                 "time_end": (datetime.now() + timedelta(minutes=1 * i)).isoformat(
                     timespec="minutes"
