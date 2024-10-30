@@ -35,11 +35,11 @@ func LoginPage() (*rod.Page, *rod.Browser) {
     u := launcher.New().Bin(LauncherSystemBrowser()).MustLaunch()
 	b := rod.New().ControlURL(u).MustConnect()
 	p := b.MustPage(os.Getenv("GOAPP_URL")+"/login")
-	p.EachEvent(func(e *proto.RuntimeConsoleAPICalled) {
+	go p.EachEvent(func(e *proto.RuntimeConsoleAPICalled) {
 		if e.Type == proto.RuntimeConsoleAPICalledTypeLog {
-			fmt.Println("BROWSER: ", p.MustObjectsToJSON(e.Args))
+			fmt.Println(p.MustObjectsToJSON(e.Args))
 		}
-	})
+	})()
 	err := p.WaitStable(time.Second * 2)
 	if err != nil {
 		log.Fatal(err)
@@ -51,11 +51,11 @@ func LoginPage() (*rod.Page, *rod.Browser) {
 func Register(user string, pass string,
 	repeatPass string) (*rod.Page, *rod.Browser) {
 	p, b := LoginPage()
-	p.EachEvent(func(e *proto.RuntimeConsoleAPICalled) {
+	go p.EachEvent(func(e *proto.RuntimeConsoleAPICalled) {
 		if e.Type == proto.RuntimeConsoleAPICalledTypeLog {
-			fmt.Println("BROWSER: ", p.MustObjectsToJSON(e.Args))
+			fmt.Println(p.MustObjectsToJSON(e.Args))
 		}
-	})
+	})()
 	log.Println("using Register()")
 	p.MustElement("#show-register").MustClick()
 	p.MustElement("#register-username").MustInput(user)
@@ -76,11 +76,11 @@ func Register(user string, pass string,
 func RegisterDoubleClickButton(user string, pass string,
 	repeatPass string) (*rod.Page, *rod.Browser) {
 	p, b := Register(user, pass, repeatPass)
-	p.EachEvent(func(e *proto.RuntimeConsoleAPICalled) {
+	go p.EachEvent(func(e *proto.RuntimeConsoleAPICalled) {
 		if e.Type == proto.RuntimeConsoleAPICalledTypeLog {
-			fmt.Println("BROWSER: ", p.MustObjectsToJSON(e.Args))
+			fmt.Println(p.MustObjectsToJSON(e.Args))
 		}
-	})
+	})()
 	log.Println("using RegisterDoubleClickButton()")
 	p.MustElement("#register-button").MustClick()
 	log.Println("return from RegisterDoubleClickButton()")
