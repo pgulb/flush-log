@@ -5,7 +5,7 @@ import dateutil
 import fastapi
 import pymongo
 from db import create_mock_client, create_mongo_client, hash_password, verify_pass_hash
-from fastapi import Depends, HTTPException, Response, status
+from fastapi import Depends, HTTPException, Query, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasicCredentials
 from httpbasic import HTTPBasic
@@ -148,7 +148,9 @@ def create_update_flush(
 
 
 @app.delete("/flush", status_code=status.HTTP_204_NO_CONTENT)
-def delete_flush(flush: Flush, credentials: HTTPBasicCredentials = Depends(security)):
+def delete_flush(
+    flush: Flush = Query(), credentials: HTTPBasicCredentials = Depends(security)
+):
     check_creds(credentials)
     flushes = client.flush.flushes
     try:
