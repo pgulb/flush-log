@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
@@ -33,7 +34,10 @@ func LoginPage() (*rod.Page, *rod.Browser) {
     u := launcher.New().Bin(LauncherSystemBrowser()).MustLaunch()
 	b := rod.New().ControlURL(u).MustConnect()
 	p := b.MustPage(os.Getenv("GOAPP_URL")+"/login")
-	p.MustWaitIdle()
+	err := p.WaitStable(time.Second * 2)
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Println("return from LoginPage()")
 	return p, b
 }
@@ -47,7 +51,10 @@ func Register(user string, pass string,
 	p.MustElement("#register-password").MustInput(pass)
 	p.MustElement("#register-password-repeat").MustInput(repeatPass)
 	p.MustElement("#register-button").MustClick()
-	p.MustWaitIdle()
+	err := p.WaitStable(time.Second * 2)
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Println("return from Register()")
 	return p, b
 }
