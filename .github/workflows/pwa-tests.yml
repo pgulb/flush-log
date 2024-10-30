@@ -36,7 +36,11 @@ jobs:
       - name: Install go-task
         run: sudo sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
       - name: install chromium
-        run : sudo apt-get update && sudo apt-get install -y chromium-browser
+        run: sudo apt-get update && sudo apt-get install -y chromium-browser
+      - name: run which on chromium and chrome
+        run: |
+          which chromium-browser
+          which google-chrome || true
       - name: run unit tests
         run: task test-pwa-unit
       - name: run integration tests
