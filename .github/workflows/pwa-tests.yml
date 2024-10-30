@@ -43,10 +43,6 @@ jobs:
         run: nc -vz localhost 6789
       - name: check api with curl
         run: curl http://localhost:6789/readyz
-      - name: remove chrome and edge
-        run: sudo apt-get purge google-chrome-stable microsoft-edge-stable
-      - name: install chromium
-        run: sudo apt-get update && sudo apt-get install -y chromium-browser
       - name: run unit tests
         run: task test-pwa-unit
       - name: run integration tests

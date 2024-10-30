@@ -55,6 +55,7 @@ func Register(user string, pass string,
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Println(p.HTML())
 	log.Println("return from Register()")
 	return p, b
 }
