@@ -37,6 +37,12 @@ tasks:
     dir: api
     env:
       MONGO_URL: mongodb://mongo:27017
+  init-uv-venv:
+    cmds:
+      - uv venv
+      - uv pip install -r requirements.txt
+      - uv pip install pytest httpx
+    dir: api
   test-pwa-unit:
     cmds:
       - go test -v
@@ -55,16 +61,10 @@ tasks:
     dir: pwa/test/integration
     env:
       GOAPP_URL: http://localhost:8080
-  test-pwa-integration-ci:
+  test-pwa-integration-container:
     cmds:
-      - go mod download
-      - go test -v
+      - docker rm -f pwatest || true
+      - docker build -t pwa:test -f ./Dockerfile-test .
+      - docker run --rm --net host -e GOAPP_URL=http://localhost:8080 --name pwatest pwa:test
+      - docker rm -f pwatest || true
     dir: pwa/test/integration
-    env:
-      GOAPP_URL: http://pwa:8080
-  init-uv-venv:
-    cmds:
-      - uv venv
-      - uv pip install -r requirements.txt
-      - uv pip install pytest httpx
-    dir: api
