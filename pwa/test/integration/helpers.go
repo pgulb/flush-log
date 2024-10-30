@@ -37,7 +37,7 @@ func LoginPage() (*rod.Page, *rod.Browser) {
 	p := b.MustPage(os.Getenv("GOAPP_URL")+"/login")
 	go p.EachEvent(func(e *proto.RuntimeConsoleAPICalled) {
 		if e.Type == proto.RuntimeConsoleAPICalledTypeLog {
-			fmt.Println(p.MustObjectsToJSON(e.Args))
+			fmt.Println("BROWSER:", p.MustObjectsToJSON(e.Args))
 		}
 	})()
 	err := p.WaitStable(time.Second * 2)
@@ -53,7 +53,7 @@ func Register(user string, pass string,
 	p, b := LoginPage()
 	go p.EachEvent(func(e *proto.RuntimeConsoleAPICalled) {
 		if e.Type == proto.RuntimeConsoleAPICalledTypeLog {
-			fmt.Println(p.MustObjectsToJSON(e.Args))
+			fmt.Println("BROWSER:", p.MustObjectsToJSON(e.Args))
 		}
 	})()
 	log.Println("using Register()")
@@ -78,7 +78,7 @@ func RegisterDoubleClickButton(user string, pass string,
 	p, b := Register(user, pass, repeatPass)
 	go p.EachEvent(func(e *proto.RuntimeConsoleAPICalled) {
 		if e.Type == proto.RuntimeConsoleAPICalledTypeLog {
-			fmt.Println(p.MustObjectsToJSON(e.Args))
+			fmt.Println("BROWSER:", p.MustObjectsToJSON(e.Args))
 		}
 	})()
 	log.Println("using RegisterDoubleClickButton()")
