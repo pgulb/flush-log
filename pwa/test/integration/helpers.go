@@ -47,6 +47,7 @@ func Register(user string, pass string,
 	p.MustElement("#register-password").MustInput(pass)
 	p.MustElement("#register-password-repeat").MustInput(repeatPass)
 	p.MustElement("#register-button").MustClick()
+	p.MustWaitIdle()
 	log.Println("return from Register()")
 	return p, b
 }
