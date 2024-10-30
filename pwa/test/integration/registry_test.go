@@ -1,7 +1,6 @@
 package intest
 
 import (
-	"log"
 	"strings"
 	"testing"
 )
@@ -9,7 +8,6 @@ import (
 func TestRegister(t *testing.T) {
 	p, b := Register("user_registry_test", "pass_registry_test",
 	"pass_registry_test")
-	log.Println(p.HTML())
 	defer b.MustClose()
 	defer p.MustClose()
 	e := p.MustElement("#fetched-flushes")

@@ -222,6 +222,7 @@ func (b *buttonRegister) onClick(ctx app.Context, e app.Event) {
 	}
 	ctx.Async(func() {
 		status, basic_auth, err := TryRegister(user, pass)
+		log.Println("register status code: ", status)
 		if err != nil {
 			ShowErrorDiv(ctx, err, 1)
 		}
