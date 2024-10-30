@@ -6,7 +6,7 @@ ADD main/* ./main/
 ADD flush/* ./flush/
 RUN GOARCH=wasm GOOS=js go build -o web/app.wasm ./main/main.go && \
 GOARCH=amd64 GOOS=linux go build -o flush-log ./main/main.go
-RUN printf 'http://api:6789' > /app/web/apiurl
+RUN printf 'http://localhost:6789' > /app/web/apiurl
 
 FROM scratch
 WORKDIR /app
