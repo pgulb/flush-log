@@ -67,6 +67,7 @@ func DisplayError(err error) {
 }
 
 func ShowErrorDiv(ctx app.Context, err error, seconds time.Duration) {
+	log.Println("Error: ", err)
 	app.Window().GetElementByID("error").Set("innerHTML", err.Error())
 	app.Window().GetElementByID("error").Set("className", ErrorDivCss)
 	ctx.Async(func() {
