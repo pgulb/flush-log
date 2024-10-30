@@ -37,21 +37,15 @@ jobs:
         run: sudo sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
       - name: Install netcat
         run: sudo apt-get update && sudo apt-get install -y netcat-traditional
+      - name: wait a couple seconds
+        run: sleep 10
       - name: check pwa with nc
         run: nc -vz localhost 8080
       - name: check api with nc
         run: nc -vz localhost 6789
       - name: check api with curl
         run: curl http://localhost:6789/readyz
-      - name: remove chrome and edge
-        run: sudo apt-get purge google-chrome-stable microsoft-edge-stable
-      - name: install chromium
-        run: sudo apt-get update && sudo apt-get install -y chromium-browser
-      - name: set chromium as default browser
-        run: |
-          sudo update-alternatives --install /usr/bin/x-www-browser x-www-browser /usr/bin/chromium-browser 500 &&
-          sudo update-alternatives --set x-www-browser /usr/bin/chromium-browser
       - name: run unit tests
         run: task test-pwa-unit
-      - name: run integration tests
-        run: task test-pwa-integration
+      - name: run integration tests in docker container
+        run: task test-pwa-integration-container
