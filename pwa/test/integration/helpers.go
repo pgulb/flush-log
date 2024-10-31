@@ -51,11 +51,6 @@ func LoginPage() (*rod.Page, *rod.Browser) {
 func Register(user string, pass string,
 	repeatPass string) (*rod.Page, *rod.Browser) {
 	p, b := LoginPage()
-	go p.EachEvent(func(e *proto.RuntimeConsoleAPICalled) {
-		if e.Type == proto.RuntimeConsoleAPICalledTypeLog {
-			fmt.Println("BROWSER:", p.MustObjectsToJSON(e.Args))
-		}
-	})()
 	log.Println("using Register()")
 	p.MustElement("#show-register").MustClick()
 	p.MustElement("#register-username").MustInput(user)
@@ -76,11 +71,6 @@ func Register(user string, pass string,
 func RegisterDoubleClickButton(user string, pass string,
 	repeatPass string) (*rod.Page, *rod.Browser) {
 	p, b := Register(user, pass, repeatPass)
-	go p.EachEvent(func(e *proto.RuntimeConsoleAPICalled) {
-		if e.Type == proto.RuntimeConsoleAPICalledTypeLog {
-			fmt.Println("BROWSER:", p.MustObjectsToJSON(e.Args))
-		}
-	})()
 	log.Println("using RegisterDoubleClickButton()")
 	p.MustElement("#register-button").MustClick()
 	log.Println("return from RegisterDoubleClickButton()")
@@ -104,4 +94,17 @@ func CheckRegisterHintVisible(p *rod.Page) error {
 		return errors.New("#credentials hint still invisible")
 	}
 	return nil
+}
+
+func RegisterAndGoToNew(user string, pass string,
+	repeatPass string) (*rod.Page, *rod.Browser) {
+	log.Println("using RegisterAndGoToNew()")
+	p, b := Register(user, pass, repeatPass)
+	p.Navigate(os.Getenv("GOAPP_URL")+"/new")
+	err := p.WaitStable(time.Second * 2)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("return from RegisterAndGoToNew()")
+	return p, b
 }

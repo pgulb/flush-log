@@ -180,6 +180,7 @@ func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 		status, basic_auth, err := TryLogin(user, pass)
 		if err != nil {
 			ShowErrorDiv(ctx, err, 1)
+			return
 		}
 		switch status {
 		case 200:
@@ -257,4 +258,117 @@ func (b *buttonLogout) Render() app.UI {
 func (b *buttonLogout) onClick(ctx app.Context, e app.Event) {
 	ctx.SetState("creds", Creds{LoggedIn: false}).PersistWithEncryption()
 	app.Window().Set("location", ".")
+}
+
+type NewFlushContainer struct {
+	app.Compo
+}
+func (c *NewFlushContainer) Render() app.UI {
+	return app.Div().Body(
+		app.Div().Body(
+			app.Div().Body(
+				app.P().Text("Add new flush").Class("font-bold"),
+				app.Br(),
+				app.Label().For("new-flush-time-start").Text("Start:").Class("m-2"),
+				app.Input().Type("datetime-local",
+				).ID("new-flush-time-start").Class("m-2"),
+				app.Br(),
+				app.Label().For("new-flush-time-end").Text("End:").Class("m-2"),
+				app.Input().Type("datetime-local",
+				).ID("new-flush-time-end").Class("m-2"),
+				app.Br(),
+				app.Label().For("new-flush-rating").Text("Rating").Class("m-2"),
+				app.Select().ID("new-flush-rating").Class("m-2").Body(
+					app.Option().Value("1").Text("1"),
+					app.Option().Value("2").Text("2"),
+					app.Option().Value("3").Text("3"),
+					app.Option().Value("4").Text("4"),
+					app.Option().Value("5").Text("5"),
+					app.Option().Value("6").Text("6"),
+					app.Option().Value("7").Text("7"),
+					app.Option().Value("8").Text("8"),
+					app.Option().Value("9").Text("9"),
+					app.Option().Value("10").Text("10"),
+				),
+				app.Br(),
+				app.Label().For("new-flush-phone-used").Text("Phone used").Class("m-2"),
+				app.Input().Type("checkbox").ID("new-flush-phone-used").Class("m-2"),
+				app.Br(),
+				app.Hr(),
+				app.Textarea().Placeholder("note here").ID(
+					"new-flush-note").MaxLength(100),
+				app.Br(),
+				&SubmitFlushButton{},
+			).Class("p-4 text-center text-xl shadow-lg bg-white rounded-lg"),
+			app.Br(),
+			&BackButton{},
+		).Class("flex flex-col"),
+		app.Div().Body(&ErrorContainer{}),
+	).Class(CenteringDivCss)
+}
+func (c *NewFlushContainer) OnMount(ctx app.Context) {
+	var creds Creds
+	ctx.GetState("creds", &creds)
+	log.Println("Logged in: ", creds.LoggedIn)
+	if !creds.LoggedIn {
+		app.Window().Set("location", "login")
+		return
+	}
+}
+
+type BackButton struct {
+	app.Compo
+}
+func (b *BackButton) Render() app.UI {
+	return app.Button().Text("Back to Home Screen").Class(YellowButtonCss,
+		).ID("back-to-home-button").OnClick(b.onClick)
+}
+func (b *BackButton) onClick(ctx app.Context, e app.Event) {
+	app.Window().Set("location", ".")
+}
+
+type SubmitFlushButton struct {
+	app.Compo
+}
+func (b *SubmitFlushButton) Render() app.UI {
+	return app.Button().Text("Submit").Class(YellowButtonCss,
+		).ID("submit-flush-button").OnClick(b.onClick)
+}
+func (b *SubmitFlushButton) onClick(ctx app.Context, e app.Event) {
+	var creds Creds
+	ctx.GetState("creds", &creds)
+	log.Println("Logged in: ", creds.LoggedIn)
+	if !creds.LoggedIn {
+		app.Window().Set("location", "login")
+		return
+	}
+	flush, err := NewFLush(ctx,
+		app.Window().GetElementByID("new-flush-time-start").Get("value").String(),
+		app.Window().GetElementByID("new-flush-time-end").Get("value").String(),
+		app.Window().GetElementByID("new-flush-rating").Get("value").String(),
+		app.Window().GetElementByID("new-flush-phone-used").Get("checked").Bool(),
+		app.Window().GetElementByID("new-flush-note").Get("value").String())
+	if err != nil {
+		ShowErrorDiv(ctx, err, 2)
+		return
+	}
+	err = ValidateFlush(flush)
+	if err != nil {
+		ShowErrorDiv(ctx, err, 1)
+		return
+	}
+	ctx.Async(func() {
+		statusCode, err := TryAddFlush(creds, flush)
+		log.Println("Flush add statusCode: ", statusCode)
+		if err != nil {
+			ShowErrorDiv(ctx, err, 2)
+			return
+		}
+		switch statusCode {
+		case 201, 204:
+			app.Window().Set("location", ".")
+		default:
+			ShowErrorDiv(ctx, errors.New("Unexpected error while adding flush"), 2)
+		}
+	})
 }
