@@ -1,7 +1,9 @@
 package test
 
 import (
+	"log"
 	"testing"
+	"time"
 
 	f "github.com/pgulb/flush-log/flush"
 )
@@ -77,5 +79,77 @@ func TestValidateLoginCreds(t *testing.T) {
 	if err := f.ValidateLoginCreds(
 		"", "", f.LastTriedCreds{}); err == nil {
 		t.Fatal("should error on empty creds")
+	}
+}
+
+func TestValidateFlush(t *testing.T) {
+	failCases := []f.Flush{
+		{
+			TimeStart: time.Now(),
+			TimeEnd:   time.Now().Add(-time.Hour), // end before start
+			Rating:    5,
+			PhoneUsed: true,
+			Note:      "test",
+		},
+		{
+			TimeStart: time.Now().Add(time.Hour),
+			TimeEnd:   time.Now(),
+			Rating:    11, // out of range
+			PhoneUsed: true,
+			Note:      "test",
+		},
+		{
+			TimeStart: time.Time{},
+			TimeEnd:   time.Now(),
+			Rating:    0, // out of range
+			PhoneUsed: true,
+			Note:      "test",
+		},
+		{
+			TimeStart: time.Time{},
+			TimeEnd:   time.Now(),
+			Rating:    5,
+			PhoneUsed: true,
+			Note:      `asdasdasdasdasdasdasdasdasdasdasda
+			sdasdasdasdasdasdasdasdasdasdasdasdasdasdasdas
+			dasdasdasdasdasdasdasdasdasdasdasdasdasd`, // too long
+		},
+	}
+
+	okCases := []f.Flush{
+		{
+			TimeStart: time.Now(),
+			TimeEnd:   time.Now().Add(time.Hour),
+			Rating:    5,
+			PhoneUsed: true,
+			Note:      "test",
+		},
+		{
+			TimeStart: time.Now(),
+			TimeEnd:   time.Now().Add(time.Hour),
+			Rating:    10,
+			PhoneUsed: false,
+			Note:      "dfgs lkjghsd uhgriewop hguifd sohbvxpoxchvbp oihs pdfobhpwerb hwpefobhi sdpfbhsdpfboishdrg sdpfgoish",
+		},
+		{
+			TimeStart: time.Now().Add(-time.Hour),
+			TimeEnd:   time.Now().Add(time.Hour),
+			Rating:    1,
+			PhoneUsed: false,
+			Note:      `k;\ÎºIàðãÀv,ëm,ÓÅèïº)ÿ7dèÉó×EàrXê3liæWãÎtÅÑ%²Xse²w¥=ðÿë8+Îå6_ÊÁ¶w£,!Iaú¾%¤×øzNíæ¤æ\ØåÐo7\ÿ`,
+		},
+	}
+
+	for _, c := range failCases {
+		log.Println(c)
+		if err := f.ValidateFlush(c); err == nil {
+			t.Fatal("should error on invalid flush")
+		}
+	}
+	for _, c := range okCases {
+		log.Println(c)
+		if err := f.ValidateFlush(c); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
