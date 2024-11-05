@@ -86,11 +86,11 @@ func NewFLush(ctx app.Context, timeStartRaw string, timeEndRaw string,
 	log.Println("timeEnd raw: ", timeEndRaw)
 	timeStart, err := time.Parse("2006-01-02T15:04", timeStartRaw)
 	if err != nil {
-		return Flush{}, err
+		return Flush{}, errors.New("time-start and time-end are required")
 	}
 	timeEnd, err := time.Parse("2006-01-02T15:04", timeEndRaw)
 	if err != nil {
-		return Flush{}, err
+		return Flush{}, errors.New("time-start and time-end are required")
 	}
 	rating, err := strconv.Atoi(ratingRaw)
 	if err != nil {
