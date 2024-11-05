@@ -114,7 +114,7 @@ func ValidateFlush(flush Flush) error {
 	if flush.Rating < 1 || flush.Rating > 10 {
 		return errors.New("rating must be between 1 and 10")
 	}
-	if len(flush.Note) > 100 {
+	if len([]rune(flush.Note)) > 100 {
 		return errors.New("note must be at most 100 characters")
 	}
 	return nil
