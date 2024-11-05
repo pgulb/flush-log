@@ -277,7 +277,7 @@ func (c *NewFlushContainer) Render() app.UI {
 				app.Input().Type("datetime-local",
 				).ID("new-flush-time-end").Class("m-2"),
 				app.Br(),
-				app.Label().For("new-flush-rating").Text("Rating").Class("m-2"),
+				app.Label().For("new-flush-rating").Text("Rating (1-worst, 10-best)").Class("m-2"),
 				app.Select().ID("new-flush-rating").Class("m-2").Body(
 					app.Option().Value("1").Text("1"),
 					app.Option().Value("2").Text("2"),
