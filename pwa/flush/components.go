@@ -14,6 +14,7 @@ const (
 	CenteringDivCss = "flex flex-row min-h-screen justify-center items-center"
 	RegisterDivCss = "p-4 text-center text-xl shadow-lg bg-white rounded-lg mx-10"
 	InviCss = "fixed invisible"
+	RootContainerCss = "shadow-lg bg-white rounded-lg p-6 min-h-72 relative"
 )
 
 type ErrorContainer struct {
@@ -75,8 +76,10 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 	ctx.GetState("creds", &creds)
 	log.Println("Logged in: ", creds.LoggedIn)
 	if !creds.LoggedIn {
-		app.Window().Set("location", "login")
+		log.Println("Not logged in at root...")
 	} else {
+		app.Window().GetElementByID("root-container").Set("className", RootContainerCss)
+		app.Window().GetElementByID("about-container").Set("className", "invisible fixed")
 		ctx.Async(func() {
 			m, err := GetFlushesFromApi(ctx)
 			if err != nil {
@@ -89,17 +92,19 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 }
 func (b *RootContainer) Render() app.UI {
 	return app.Div().Body(
-		app.H1().Text("Flush Log").Class("text-2xl"),
-		app.P().Text("Tracked flushes:").Class("py-2"),
-		app.P().Text("").Class(
-			"py-2",
-		).ID("fetched-flushes"),
-		b.buttonUpdate.Render(),
-		&buttonLogout{},
+		app.Div().Body(
+			app.H1().Text("Flush Log").Class("text-2xl"),
+			app.P().Text("Tracked flushes:").Class("py-2"),
+			app.P().Text("").Class(
+				"py-2",
+			).ID("fetched-flushes"),
+			b.buttonUpdate.Render(),
+			&buttonLogout{},
+		).Class("invisible fixed").ID("root-container"),
+		&AboutContainer{},
 		app.Div().Body(&ErrorContainer{}),
-	).Class("shadow-lg bg-white rounded-lg p-6 min-h-72 relative")
+	)
 }
-
 type buttonUpdate struct {
 	app.Compo
 }
@@ -301,7 +306,7 @@ func (c *NewFlushContainer) Render() app.UI {
 				&SubmitFlushButton{},
 			).Class("p-4 text-center text-xl shadow-lg bg-white rounded-lg"),
 			app.Br(),
-			&BackButton{},
+			&LinkButton{Text: "Back to Home Screen", Location: "."},
 		).Class("flex flex-col"),
 		app.Div().Body(&ErrorContainer{}),
 	).Class(CenteringDivCss)
@@ -316,15 +321,17 @@ func (c *NewFlushContainer) OnMount(ctx app.Context) {
 	}
 }
 
-type BackButton struct {
+type LinkButton struct {
 	app.Compo
+	Text string
+	Location string
 }
-func (b *BackButton) Render() app.UI {
-	return app.Button().Text("Back to Home Screen").Class(YellowButtonCss,
+func (b *LinkButton) Render() app.UI {
+	return app.Button().Text(b.Text).Class(YellowButtonCss,
 		).ID("back-to-home-button").OnClick(b.onClick)
 }
-func (b *BackButton) onClick(ctx app.Context, e app.Event) {
-	app.Window().Set("location", ".")
+func (b *LinkButton) onClick(ctx app.Context, e app.Event) {
+	app.Window().Set("location", b.Location)
 }
 
 type SubmitFlushButton struct {
@@ -371,4 +378,24 @@ func (b *SubmitFlushButton) onClick(ctx app.Context, e app.Event) {
 			ShowErrorDiv(ctx, errors.New("Unexpected error while adding flush"), 2)
 		}
 	})
+}
+
+type AboutContainer struct {
+	app.Compo
+}
+func (a *AboutContainer) Render() app.UI {
+	return app.Div().Body(
+		app.Div().Body(
+			app.H1().Text("About Flush Log").Class("text-2xl bold"),
+			app.Br(),
+			app.P().Text("Application for tracking toilet flushes."),
+			app.P().Text("You can use it to save them, rate them, check your toilet stats."),
+			app.P().Text("The app will show you statistics like total time spent, average time spent, % times with phone used etc."),
+			app.Br(),
+			app.P().Text("App is still under development. New features can be added."),
+			app.P().Text("App can be 'installed' - it will appear on computer's program list or on phone home screen."),
+			app.Br(),
+			&LinkButton{Text: "Login/Register", Location: "/login"},
+		).ID("about-container").Class("flex flex-col p-4 shadow-lg rounded-lg"),
+	).Class(CenteringDivCss)
 }
