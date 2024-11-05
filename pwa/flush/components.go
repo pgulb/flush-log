@@ -295,7 +295,7 @@ func (c *NewFlushContainer) Render() app.UI {
 				app.Input().Type("checkbox").ID("new-flush-phone-used").Class("m-2"),
 				app.Br(),
 				app.Hr(),
-				app.Textarea().Placeholder("note here").ID(
+				app.Textarea().Placeholder("notes").ID(
 					"new-flush-note").MaxLength(100),
 				app.Br(),
 				&SubmitFlushButton{},
