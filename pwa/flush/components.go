@@ -81,7 +81,7 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 		app.Window().GetElementByID("root-container").Set("className", RootContainerCss)
 		app.Window().GetElementByID("about-container").Set("className", "invisible fixed")
 		ctx.Async(func() {
-			m, err := GetFlushesFromApi(ctx)
+			m, err := TryAuthentication(ctx)
 			if err != nil {
 				ShowErrorDiv(ctx, err, 1)
 			} else {
@@ -119,7 +119,7 @@ func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 	ctx.Async(func() {
 		if creds.LoggedIn {
 			log.Println("Getting new API response...")
-			m, err := GetFlushesFromApi(ctx)
+			m, err := TryAuthentication(ctx)
 			if err != nil {
 				ShowErrorDiv(ctx, err, 1)
 			} else {

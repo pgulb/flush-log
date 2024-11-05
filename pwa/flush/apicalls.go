@@ -72,7 +72,7 @@ func TryRegister(username string, password string) (int, string, error) {
 	return r.StatusCode, basicAuth, nil
 }
 
-func GetFlushesFromApi(ctx app.Context) (string, error) {
+func TryAuthentication(ctx app.Context) (string, error) {
 	apiUrl, err := GetApiUrl()
 	if err != nil {
 		return "", err
