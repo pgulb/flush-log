@@ -100,6 +100,7 @@ func (b *RootContainer) Render() app.UI {
 			).ID("fetched-flushes"),
 			b.buttonUpdate.Render(),
 			&buttonLogout{},
+			&LinkButton{Text: "(+)", Location: "/new", AdditionalCss: "absolute bottom-4 right-4"},
 		).Class("invisible fixed").ID("root-container"),
 		&AboutContainer{},
 		app.Div().Body(&ErrorContainer{}),
@@ -258,7 +259,7 @@ type buttonLogout struct {
 }
 func (b *buttonLogout) Render() app.UI {
 	return app.Button().Text("Log out").OnClick(b.onClick).Class(
-		"font-bold border-2 border-white p-2 rounded absolute bottom-4 right-4")
+		"font-bold border-2 border-white p-2 rounded absolute top-4 right-4")
 }
 func (b *buttonLogout) onClick(ctx app.Context, e app.Event) {
 	ctx.SetState("creds", Creds{LoggedIn: false}).PersistWithEncryption()
@@ -325,10 +326,15 @@ type LinkButton struct {
 	app.Compo
 	Text string
 	Location string
+	AdditionalCss string
 }
 func (b *LinkButton) Render() app.UI {
+	if b.AdditionalCss != "" {
+		return app.Button().Text(b.Text).Class(b.AdditionalCss + " " + YellowButtonCss,
+			).OnClick(b.onClick)
+	}
 	return app.Button().Text(b.Text).Class(YellowButtonCss,
-		).ID("back-to-home-button").OnClick(b.onClick)
+		).OnClick(b.onClick)
 }
 func (b *LinkButton) onClick(ctx app.Context, e app.Event) {
 	app.Window().Set("location", b.Location)
