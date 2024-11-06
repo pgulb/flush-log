@@ -107,7 +107,7 @@ func (b *RootContainer) Render() app.UI {
 			b.FlushList,
 			app.Div().Body(
 				b.buttonUpdate.Render(),
-				&LinkButton{Text: "(+)", Location: "/new", AdditionalCss: "absolute bottom-4 right-4"},
+				&LinkButton{Text: "(+)", Location: "new", AdditionalCss: "absolute bottom-4 right-4"},
 			).Class("m-10"),
 		).Class("invisible fixed").ID("root-container"),
 		&AboutContainer{},
@@ -416,7 +416,7 @@ func (a *AboutContainer) Render() app.UI {
 			app.P().Text("App is still under development. New features can be added."),
 			app.P().Text("App can be 'installed' - it will appear on computer's program list or on phone home screen."),
 			app.Br(),
-			&LinkButton{Text: "Login/Register", Location: "/login"},
+			&LinkButton{Text: "Login/Register", Location: "login"},
 		).ID("about-container").Class("flex flex-col p-4 shadow-lg rounded-lg"),
 	).Class(CenteringDivCss)
 }
