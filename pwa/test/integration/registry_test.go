@@ -1,6 +1,7 @@
 package intest
 
 import (
+	"log"
 	"strings"
 	"testing"
 )
@@ -10,8 +11,10 @@ func TestRegister(t *testing.T) {
 	"pass_registry_test")
 	defer b.MustClose()
 	defer p.MustClose()
+	h, _ := p.HTML()
+	log.Println(h)
 	e := p.MustElement("#hidden-hello")
-	if !strings.Contains(e.MustText(), "user_registry_test") {
+	if !strings.Contains(e.MustProperty("innerHTML").String(), "user_registry_test") {
 		t.Fatal("user not registered")
 	}
 }
