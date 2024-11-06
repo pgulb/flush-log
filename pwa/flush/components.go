@@ -3,6 +3,7 @@ package flush
 import (
 	"errors"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/maxence-charriere/go-app/v10/pkg/app"
@@ -70,8 +71,10 @@ func (r *RegisterContainer) Render() app.UI {
 type RootContainer struct {
 	app.Compo
 	buttonUpdate
+	FlushList app.UI
 }
 func (b *RootContainer) OnMount(ctx app.Context) {
+	b.buttonUpdate.RootContainer = b
 	var creds Creds
 	ctx.GetState("creds", &creds)
 	log.Println("Logged in: ", creds.LoggedIn)
@@ -80,27 +83,32 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 	} else {
 		app.Window().GetElementByID("root-container").Set("className", RootContainerCss)
 		app.Window().GetElementByID("about-container").Set("className", "invisible fixed")
-		ctx.Async(func() {
-			m, err := TryAuthentication(ctx)
-			if err != nil {
-				ShowErrorDiv(ctx, err, 1)
-			} else {
-				app.Window().GetElementByID("fetched-flushes").Set("innerHTML", m)
-			}
-		})
+		hello, err := TryAuthentication(ctx)
+		if err != nil {
+			ShowErrorDiv(ctx, err, 1)
+			return
+		}
+		flushes, err := GetFlushes(ctx)
+		if err != nil {
+			ShowErrorDiv(ctx, err, 1)
+		} else {
+			app.Window().GetElementByID("hidden-hello").Set("innerHTML", hello)
+			b.FlushList = FLushTable(flushes)
+		}
 	}
 }
 func (b *RootContainer) Render() app.UI {
 	return app.Div().Body(
+		app.P().Text("empty").Class("invisible fixed").ID("hidden-hello"),
 		app.Div().Body(
 			app.H1().Text("Flush Log").Class("text-2xl"),
-			app.P().Text("Tracked flushes:").Class("py-2"),
-			app.P().Text("").Class(
-				"py-2",
-			).ID("fetched-flushes"),
-			b.buttonUpdate.Render(),
 			&buttonLogout{},
-			&LinkButton{Text: "(+)", Location: "/new", AdditionalCss: "absolute bottom-4 right-4"},
+			app.P().Text("Tracked flushes:").Class("py-2"),
+			b.FlushList,
+			app.Div().Body(
+				b.buttonUpdate.Render(),
+				&LinkButton{Text: "(+)", Location: "/new", AdditionalCss: "absolute bottom-4 right-4"},
+			).Class("m-10"),
 		).Class("invisible fixed").ID("root-container"),
 		&AboutContainer{},
 		app.Div().Body(&ErrorContainer{}),
@@ -108,6 +116,7 @@ func (b *RootContainer) Render() app.UI {
 }
 type buttonUpdate struct {
 	app.Compo
+	*RootContainer
 }
 func (b *buttonUpdate) Render() app.UI {
 	return app.Button().Text("Update").OnClick(b.onClick).Class(
@@ -119,11 +128,17 @@ func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 	ctx.Async(func() {
 		if creds.LoggedIn {
 			log.Println("Getting new API response...")
-			m, err := TryAuthentication(ctx)
+			hello, err := TryAuthentication(ctx)
+			if err != nil {
+				ShowErrorDiv(ctx, err, 1)
+				return
+			}
+			flushes, err := GetFlushes(ctx)
 			if err != nil {
 				ShowErrorDiv(ctx, err, 1)
 			} else {
-				app.Window().GetElementByID("fetched-flushes").Set("innerHTML", m)
+				app.Window().GetElementByID("hidden-hello").Set("innerHTML", hello)
+				b.RootContainer.FlushList = FLushTable(flushes)
 			}
 		}})
 }
@@ -404,4 +419,26 @@ func (a *AboutContainer) Render() app.UI {
 			&LinkButton{Text: "Login/Register", Location: "/login"},
 		).ID("about-container").Class("flex flex-col p-4 shadow-lg rounded-lg"),
 	).Class(CenteringDivCss)
+}
+
+func FLushTable(flushes []Flush) app.UI {
+	divs := []app.UI{}
+	for _, flush := range flushes {
+		var phoneUsed string
+		if flush.PhoneUsed {
+			phoneUsed = "Yes"
+		} else {
+			phoneUsed = "No"
+		}
+		divs = append(divs,
+			app.Div().Body(
+				app.P().Text("Time: " + flush.TimeStart.Format(
+					"2006-01-02 15:04") + " - " + flush.TimeEnd.Format("2006-01-02 15:04")),
+				app.P().Text("Rating: " + strconv.Itoa(flush.Rating)),
+				app.P().Text("Phone used: " + phoneUsed),
+				app.P().Text("Note: '" + flush.Note + "'"),
+			).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg"),
+		)
+	}
+	return app.Div().Body(divs...)
 }

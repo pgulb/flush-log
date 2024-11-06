@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/maxence-charriere/go-app/v10/pkg/app"
 )
@@ -136,4 +138,59 @@ func TryAddFlush(creds Creds, flush Flush) (int, error) {
 	}
 	defer CloseBody(r)
 	return r.StatusCode, nil
+}
+
+func GetFlushes(ctx app.Context) ([]Flush, error) {
+	apiUrl, err := GetApiUrl()
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("GET", apiUrl+"/flushes", nil)
+	if err != nil {
+		return nil, err
+	}
+	var c Creds
+	ctx.GetState("creds", &c)
+	req.Header.Add("Authorization", "Basic "+c.UserColonPass)
+	r, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer CloseBody(r)
+	if r.StatusCode >= 400 {
+		ctx.SetState("creds", Creds{LoggedIn: false}).PersistWithEncryption()
+		app.Window().Set("location", "login")
+	}
+	bytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	temp := []struct {
+		TimeStart string `json:"time_start"`
+		TimeEnd   string `json:"time_end"`
+		Rating    int       `json:"rating"`
+		PhoneUsed bool      `json:"phone_used"`
+		Note      string    `json:"note"`
+		}{}
+	err = json.Unmarshal(bytes, &temp)
+	if err != nil {
+		return nil, err
+	}
+	flushes := make([]Flush, len(temp))
+	for i := range temp {
+		flushes[i].TimeStart, err = time.Parse("2006-01-02T15:04:05", temp[i].TimeStart)
+		if err != nil {
+			return nil, err
+		}
+		flushes[i].TimeEnd, err = time.Parse("2006-01-02T15:04:05", temp[i].TimeEnd)
+		if err != nil {
+			return nil, err
+		}
+		flushes[i].Rating = temp[i].Rating
+		flushes[i].PhoneUsed = temp[i].PhoneUsed
+		flushes[i].Note = temp[i].Note
+	}
+	log.Println("temporary flush struct: ", temp)
+	log.Println("Flushes: ", flushes)
+	return flushes, nil
 }

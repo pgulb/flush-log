@@ -10,7 +10,7 @@ func TestRegister(t *testing.T) {
 	"pass_registry_test")
 	defer b.MustClose()
 	defer p.MustClose()
-	e := p.MustElement("#fetched-flushes")
+	e := p.MustElement("#hidden-hello")
 	if !strings.Contains(e.MustText(), "user_registry_test") {
 		t.Fatal("user not registered")
 	}
