@@ -35,7 +35,7 @@ type buttonShowRegister struct {
 }
 func (b *buttonShowRegister) Render() app.UI {
 	return app.Button().Text("I need account").OnClick(b.onClick).Class(
-		YellowButtonCss).ID("show-register")
+		YellowButtonCss + " hover:bg-yellow-700").ID("show-register")
 }
 func (b *buttonShowRegister) onClick(ctx app.Context, e app.Event) {
 	app.Window().GetElementByID("register-container").Set("className", RegisterDivCss)
@@ -107,7 +107,7 @@ func (b *RootContainer) Render() app.UI {
 			b.FlushList,
 			app.Div().Body(
 				b.buttonUpdate.Render(),
-				&LinkButton{Text: "(+)", Location: "/new", AdditionalCss: "absolute bottom-4 right-4"},
+				&LinkButton{Text: "(+)", Location: "new", AdditionalCss: "absolute bottom-4 right-4 hover:bg-yellow-700"},
 			).Class("m-10"),
 		).Class("invisible fixed").ID("root-container"),
 		&AboutContainer{},
@@ -180,7 +180,7 @@ type buttonLogin struct {
 }
 func (b *buttonLogin) Render() app.UI {
 	return app.Button().Text("Log in").OnClick(b.onClick).Class(
-		YellowButtonCss)
+		YellowButtonCss + " hover:bg-yellow-700")
 }
 func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 	loginSeconds := 60
@@ -230,7 +230,7 @@ type buttonRegister struct {
 }
 func (b *buttonRegister) Render() app.UI {
 	return app.Button().Text("Register").OnClick(b.onClick).Class(
-		YellowButtonCss).ID("register-button")
+		YellowButtonCss + " hover:bg-yellow-700").ID("register-button")
 }
 func (b *buttonRegister) onClick(ctx app.Context, e app.Event) {
 	log.Println("Trying to register...")
@@ -416,14 +416,27 @@ func (a *AboutContainer) Render() app.UI {
 			app.P().Text("App is still under development. New features can be added."),
 			app.P().Text("App can be 'installed' - it will appear on computer's program list or on phone home screen."),
 			app.Br(),
-			&LinkButton{Text: "Login/Register", Location: "/login"},
+			&LinkButton{Text: "Login/Register", Location: "login", AdditionalCss: "hover:bg-yellow-700"},
 		).ID("about-container").Class("flex flex-col p-4 shadow-lg rounded-lg"),
 	).Class(CenteringDivCss)
 }
 
 func FLushTable(flushes []Flush) app.UI {
+	if len(flushes) == 0 {
+		return app.Div().Body(app.P().Text("No flushes yet."))
+	}
 	divs := []app.UI{}
+	var totalTime time.Duration
+	var count int
+	var meanRating int
+	var timesWithPhone int
 	for _, flush := range flushes {
+		totalTime += flush.TimeEnd.Sub(flush.TimeStart)
+		count++
+		if flush.PhoneUsed {
+			timesWithPhone++
+		}
+		meanRating += flush.Rating
 		var phoneUsed string
 		if flush.PhoneUsed {
 			phoneUsed = "Yes"
@@ -440,5 +453,14 @@ func FLushTable(flushes []Flush) app.UI {
 			).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg"),
 		)
 	}
+	statsDiv := app.Div().Body(
+		app.P().Text("Total flushes: " + strconv.Itoa(count)),
+		app.P().Text("Total time: " + strconv.Itoa(int(totalTime.Minutes())) + " minutes"),
+		app.P().Text("Mean time: " + strconv.Itoa(int(totalTime.Minutes()) / count) + " minutes"),
+		app.P().Text("Mean rating: " + strconv.Itoa(meanRating/count)),
+		app.P().Text("Times with phone used: " + strconv.Itoa(timesWithPhone)),
+		app.P().Text("Percent with phone used: " + strconv.Itoa(timesWithPhone * 100 / count) + "%"),
+	).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg font-bold")
+	divs = append([]app.UI{statsDiv}, divs...)
 	return app.Div().Body(divs...)
 }
