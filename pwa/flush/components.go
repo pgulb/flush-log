@@ -35,7 +35,7 @@ type buttonShowRegister struct {
 }
 func (b *buttonShowRegister) Render() app.UI {
 	return app.Button().Text("I need account").OnClick(b.onClick).Class(
-		YellowButtonCss).ID("show-register")
+		YellowButtonCss + " hover:bg-yellow-700").ID("show-register")
 }
 func (b *buttonShowRegister) onClick(ctx app.Context, e app.Event) {
 	app.Window().GetElementByID("register-container").Set("className", RegisterDivCss)
@@ -180,7 +180,7 @@ type buttonLogin struct {
 }
 func (b *buttonLogin) Render() app.UI {
 	return app.Button().Text("Log in").OnClick(b.onClick).Class(
-		YellowButtonCss)
+		YellowButtonCss + " hover:bg-yellow-700")
 }
 func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 	loginSeconds := 60
@@ -230,7 +230,7 @@ type buttonRegister struct {
 }
 func (b *buttonRegister) Render() app.UI {
 	return app.Button().Text("Register").OnClick(b.onClick).Class(
-		YellowButtonCss).ID("register-button")
+		YellowButtonCss + " hover:bg-yellow-700").ID("register-button")
 }
 func (b *buttonRegister) onClick(ctx app.Context, e app.Event) {
 	log.Println("Trying to register...")
@@ -416,7 +416,7 @@ func (a *AboutContainer) Render() app.UI {
 			app.P().Text("App is still under development. New features can be added."),
 			app.P().Text("App can be 'installed' - it will appear on computer's program list or on phone home screen."),
 			app.Br(),
-			&LinkButton{Text: "Login/Register", Location: "login"},
+			&LinkButton{Text: "Login/Register", Location: "login", AdditionalCss: "hover:bg-yellow-700"},
 		).ID("about-container").Class("flex flex-col p-4 shadow-lg rounded-lg"),
 	).Class(CenteringDivCss)
 }
