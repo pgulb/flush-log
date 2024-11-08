@@ -1,5 +1,9 @@
+import csv
+import io
+import json
 import logging
 import os
+from typing import Union
 
 import dateutil
 import fastapi
@@ -175,7 +179,10 @@ def delete_flush(
 
 
 @app.get("/flushes", status_code=status.HTTP_200_OK)
-def get_flushes(credentials: HTTPBasicCredentials = Depends(security)):
+def get_flushes(
+    export_format: Union[str, None] = None,
+    credentials: HTTPBasicCredentials = Depends(security),
+):
     check_creds(credentials)
     flushes = client.flush.flushes
     try:
@@ -189,8 +196,33 @@ def get_flushes(credentials: HTTPBasicCredentials = Depends(security)):
         for entry in entries:
             del entry["_id"]
             del entry["user_id"]
+        if export_format == "json":
+            for e in entries:
+                e["time_start"] = e["time_start"].isoformat()
+                e["time_end"] = e["time_end"].isoformat()
+            js = json.dumps(entries, indent=2)
+            return Response(
+                content=js,
+                headers={"Content-Disposition": "attachment; filename=flushes.json"},
+                media_type="application/json",
+            )
+        if export_format == "csv":
+            csv_content = io.StringIO()
+            writer = csv.writer(csv_content)
+            if len(entries) > 0:
+                writer.writerow(entries[0])
+            for e in entries:
+                writer.writerow(e.values())
+            return Response(
+                content=csv_content.getvalue(),
+                headers={"Content-Disposition": "attachment; filename=flushes.csv"},
+                media_type="text/csv",
+            )
         return entries
     except Exception as e:
+        logging.error(e)
+        logging.info(type(entries))
+        logging.info(entries)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Error getting flushes"
         ) from e
