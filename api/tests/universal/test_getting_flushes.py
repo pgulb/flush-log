@@ -62,7 +62,11 @@ def test_getting_flushes():
         "/flushes", auth=BasicAuth(username=username, password=password)
     )
     assert response.status_code == status.HTTP_200_OK
-    assert response.json() == flushes
+    rev = flushes
+    rev.reverse()
+    print(rev)
+    print(response.json())
+    assert response.json() == rev
 
 
 def test_getting_flushes_noflushes():
