@@ -16,6 +16,7 @@ const (
 	RegisterDivCss   = "p-4 text-center text-xl shadow-lg bg-white rounded-lg mx-10"
 	InviCss          = "fixed invisible"
 	RootContainerCss = "shadow-lg bg-white rounded-lg p-6 min-h-72 relative"
+	LoadingCss       = "flex flex-row justify-center items-center"
 )
 
 type ErrorContainer struct {
@@ -92,6 +93,8 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 			ShowErrorDiv(ctx, err, 1)
 			return
 		}
+		ShowLoading("flushes-loading")
+		defer Hide("flushes-loading")
 		flushes, err := GetFlushes(ctx)
 		if err != nil {
 			ShowErrorDiv(ctx, err, 1)
@@ -108,6 +111,7 @@ func (b *RootContainer) Render() app.UI {
 			app.H1().Text("Flush Log").Class("text-2xl"),
 			&buttonLogout{},
 			app.P().Text("Tracked flushes:").Class("py-2"),
+			&LoadingWidget{id: "flushes-loading"},
 			b.FlushList,
 			app.Div().Body(
 				b.buttonUpdate.Render(),
@@ -144,6 +148,8 @@ func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 				ShowErrorDiv(ctx, err, 1)
 				return
 			}
+			ShowLoading("flushes-loading")
+			defer Hide("flushes-loading")
 			flushes, err := GetFlushes(ctx)
 			if err != nil {
 				ShowErrorDiv(ctx, err, 1)
@@ -512,4 +518,20 @@ func timeDiv(flush Flush) app.UI {
 				"2006-01-02 15:04")+" - "+flush.TimeEnd.Format("2006-01-02 15:04")).Class("inline"),
 		)
 	}
+}
+
+type LoadingWidget struct {
+	app.Compo
+	id string
+}
+
+func (l *LoadingWidget) Render() app.UI {
+	return app.Div().Body(
+		app.Div().Body(
+			app.Span().
+				Text("Loading...").Class("font-bold text-black").
+				Class("!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]"),
+		).
+			Class("inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite] text-yellow-500"),
+	).Class(InviCss).ID(l.id)
 }

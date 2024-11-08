@@ -120,3 +120,11 @@ func ValidateFlush(flush Flush) error {
 	}
 	return nil
 }
+
+func ShowLoading(id string) {
+	app.Window().GetElementByID(id).Set("className", LoadingCss)
+}
+
+func Hide(id string) {
+	app.Window().GetElementByID(id).Set("className", InviCss)
+}
