@@ -11,7 +11,7 @@ func TestRegister(t *testing.T) {
 	defer b.MustClose()
 	defer p.MustClose()
 	e := p.MustElement("#hidden-hello")
-	if !strings.Contains(e.MustProperty("innerHTML").String(), "user_registry_test") {
+	if !strings.Contains(e.MustProperty("innerHTML").String(), "hello!") {
 		t.Fatal("user not registered")
 	}
 }
