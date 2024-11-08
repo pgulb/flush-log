@@ -105,7 +105,11 @@ def delete_user(credentials: HTTPBasicCredentials = Depends(security)):
     check_creds(credentials)
     database = client.flush
     users = database.users
+    flushes = database.flushes
     try:
+        flushes.delete_many({"user_id": credentials.username})
+        if flushes.count_documents({"user_id": credentials.username}) > 0:
+            raise Exception("Error while flush deletion")
         result = users.delete_one({"_id": credentials.username})
         if result.deleted_count != 1:
             raise Exception("User not deleted")
@@ -184,3 +188,8 @@ def get_flushes(credentials: HTTPBasicCredentials = Depends(security)):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Error getting flushes"
         ) from e
+
+
+def get_flush_count(username: str) -> int:
+    flushes = client.flush.flushes
+    return flushes.count_documents({"user_id": username})
