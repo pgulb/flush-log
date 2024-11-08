@@ -63,7 +63,8 @@ func ShowBadRegisterCredsErr() {
 }
 
 func DisplayError(err error) {
-	app.Window().Call("alert", "An error occurred:\n\n"+err.Error()+"\n\nRefresh the page to continue.")
+	app.Window().
+		Call("alert", "An error occurred:\n\n"+err.Error()+"\n\nRefresh the page to continue.")
 	log.Fatal(err)
 }
 
@@ -102,7 +103,7 @@ func NewFLush(ctx app.Context, timeStartRaw string, timeEndRaw string,
 		Rating:    rating,
 		PhoneUsed: phoneUsed,
 		Note:      note,
-		}
+	}
 	log.Println("New flush: ", flush)
 	return flush, nil
 }

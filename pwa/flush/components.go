@@ -10,29 +10,31 @@ import (
 )
 
 const (
-	YellowButtonCss = "font-bold bg-yellow-500 p-2 rounded text-white mx-1"
-	ErrorDivCss = "flex flex-row fixed bottom-4 left-4 bg-red-500 text-white p-4 text-xl rounded-lg"
-	CenteringDivCss = "flex flex-row min-h-screen justify-center items-center"
-	RegisterDivCss = "p-4 text-center text-xl shadow-lg bg-white rounded-lg mx-10"
-	InviCss = "fixed invisible"
+	YellowButtonCss  = "font-bold bg-yellow-500 p-2 rounded text-white mx-1"
+	ErrorDivCss      = "flex flex-row fixed bottom-4 left-4 bg-red-500 text-white p-4 text-xl rounded-lg"
+	CenteringDivCss  = "flex flex-row min-h-screen justify-center items-center"
+	RegisterDivCss   = "p-4 text-center text-xl shadow-lg bg-white rounded-lg mx-10"
+	InviCss          = "fixed invisible"
 	RootContainerCss = "shadow-lg bg-white rounded-lg p-6 min-h-72 relative"
 )
 
 type ErrorContainer struct {
 	app.Compo
 }
+
 func (e *ErrorContainer) Render() app.UI {
 	return app.Div().Body(app.Div().Body(
 		app.P().Text("placeholder error")).Class(
-			"p-8 text-center text-xl shadow-lg bg-white rounded-lg",
-		)).Class(
-			InviCss,
-			).ID("error")
+		"p-8 text-center text-xl shadow-lg bg-white rounded-lg",
+	)).Class(
+		InviCss,
+	).ID("error")
 }
 
 type buttonShowRegister struct {
 	app.Compo
 }
+
 func (b *buttonShowRegister) Render() app.UI {
 	return app.Button().Text("I need account").OnClick(b.onClick).Class(
 		YellowButtonCss + " hover:bg-yellow-700").ID("show-register")
@@ -45,26 +47,27 @@ func (b *buttonShowRegister) onClick(ctx app.Context, e app.Event) {
 type RegisterContainer struct {
 	app.Compo
 }
+
 func (r *RegisterContainer) Render() app.UI {
 	return app.Div().Body(
 		app.Div().Body(
-		app.P().Text("Register").Class("font-bold"),
-		app.Input().Type("text").ID("register-username").Placeholder("Username").Class(
-			"m-2 placeholder-gray-500",
-		),
-		app.Br(),
-		app.Input().Type("password").ID("register-password").Placeholder("Password").Class(
-			"m-2 placeholder-gray-500",
-		),
-		app.Br(),
-		app.Input().Type("password").ID("register-password-repeat").Placeholder(
-			"Repeat password").Class(
-			"m-2 placeholder-gray-500 my-4",
-		),
-		app.Br(),
-		&buttonRegister{},
-		app.P().Text("").Class("text-red-500").ID("register-error"),
-	).Class(InviCss).ID("register-container"),
+			app.P().Text("Register").Class("font-bold"),
+			app.Input().Type("text").ID("register-username").Placeholder("Username").Class(
+				"m-2 placeholder-gray-500",
+			),
+			app.Br(),
+			app.Input().Type("password").ID("register-password").Placeholder("Password").Class(
+				"m-2 placeholder-gray-500",
+			),
+			app.Br(),
+			app.Input().Type("password").ID("register-password-repeat").Placeholder(
+				"Repeat password").Class(
+				"m-2 placeholder-gray-500 my-4",
+			),
+			app.Br(),
+			&buttonRegister{},
+			app.P().Text("").Class("text-red-500").ID("register-error"),
+		).Class(InviCss).ID("register-container"),
 	)
 }
 
@@ -73,6 +76,7 @@ type RootContainer struct {
 	buttonUpdate
 	FlushList app.UI
 }
+
 func (b *RootContainer) OnMount(ctx app.Context) {
 	b.buttonUpdate.RootContainer = b
 	var creds Creds
@@ -107,17 +111,24 @@ func (b *RootContainer) Render() app.UI {
 			b.FlushList,
 			app.Div().Body(
 				b.buttonUpdate.Render(),
-				&LinkButton{Text: "(+)", Location: "new", AdditionalCss: "absolute bottom-4 right-4 hover:bg-yellow-700"},
-			).Class("m-10"),
+				&LinkButton{
+					Text:          "(+)",
+					Location:      "new",
+					AdditionalCss: "absolute bottom-4 right-4 hover:bg-yellow-700",
+				},
+			).
+				Class("m-10"),
 		).Class("invisible fixed").ID("root-container"),
 		&AboutContainer{},
 		app.Div().Body(&ErrorContainer{}),
 	)
 }
+
 type buttonUpdate struct {
 	app.Compo
 	*RootContainer
 }
+
 func (b *buttonUpdate) Render() app.UI {
 	return app.Button().Text("Update").OnClick(b.onClick).Class(
 		"bg-yellow-500 hover:bg-yellow-700 text-black font-bold py-2 px-4 rounded absolute bottom-4 left-4")
@@ -140,12 +151,14 @@ func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 				app.Window().GetElementByID("hidden-hello").Set("innerHTML", hello)
 				b.RootContainer.FlushList = FLushTable(flushes)
 			}
-		}})
+		}
+	})
 }
 
 type LoginContainer struct {
 	app.Compo
 }
+
 func (l *LoginContainer) Render() app.UI {
 	return app.Div().Body(app.Div().Body(
 		app.P().Text("Log in to continue.").Class("font-bold"),
@@ -168,16 +181,16 @@ func (l *LoginContainer) Render() app.UI {
 				&buttonShowRegister{},
 			),
 		),
-	).Class("p-4 text-center text-xl shadow-lg bg-white rounded-lg",
-	).ID("login-container"),
-	&RegisterContainer{},
-	app.Div().Body(&ErrorContainer{})).Class(
+	).Class("p-4 text-center text-xl shadow-lg bg-white rounded-lg").ID("login-container"),
+		&RegisterContainer{},
+		app.Div().Body(&ErrorContainer{})).Class(
 		CenteringDivCss)
 }
 
 type buttonLogin struct {
 	app.Compo
 }
+
 func (b *buttonLogin) Render() app.UI {
 	return app.Button().Text("Log in").OnClick(b.onClick).Class(
 		YellowButtonCss + " hover:bg-yellow-700")
@@ -215,19 +228,20 @@ func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 		case 401:
 			ShowErrorDiv(ctx, errors.New("invalid credentials"), 1)
 			ctx.SetState("lastUsedCreds", LastTriedCreds{
-				User: user,
+				User:     user,
 				Password: pass,
 			}).ExpiresIn(time.Second * 10)
 		default:
 			ShowErrorDiv(ctx, errors.New("login failed"), 1)
 			ctx.DelState("lastUsedCreds")
 		}
-})
+	})
 }
 
 type buttonRegister struct {
 	app.Compo
 }
+
 func (b *buttonRegister) Render() app.UI {
 	return app.Button().Text("Register").OnClick(b.onClick).Class(
 		YellowButtonCss + " hover:bg-yellow-700").ID("register-button")
@@ -266,12 +280,13 @@ func (b *buttonRegister) onClick(ctx app.Context, e app.Event) {
 			ShowErrorDiv(ctx, errors.New("register failed"), 1)
 			ctx.DelState("lastUsedCredsRegister")
 		}
-})
+	})
 }
 
 type buttonLogout struct {
 	app.Compo
 }
+
 func (b *buttonLogout) Render() app.UI {
 	return app.Button().Text("Log out").OnClick(b.onClick).Class(
 		"font-bold border-2 border-white p-2 rounded absolute top-4 right-4")
@@ -284,6 +299,7 @@ func (b *buttonLogout) onClick(ctx app.Context, e app.Event) {
 type NewFlushContainer struct {
 	app.Compo
 }
+
 func (c *NewFlushContainer) Render() app.UI {
 	return app.Div().Body(
 		app.Div().Body(
@@ -291,12 +307,10 @@ func (c *NewFlushContainer) Render() app.UI {
 				app.P().Text("Add new flush").Class("font-bold"),
 				app.Br(),
 				app.Label().For("new-flush-time-start").Text("Start:").Class("m-2"),
-				app.Input().Type("datetime-local",
-				).ID("new-flush-time-start").Class("m-2"),
+				app.Input().Type("datetime-local").ID("new-flush-time-start").Class("m-2"),
 				app.Br(),
 				app.Label().For("new-flush-time-end").Text("End:").Class("m-2"),
-				app.Input().Type("datetime-local",
-				).ID("new-flush-time-end").Class("m-2"),
+				app.Input().Type("datetime-local").ID("new-flush-time-end").Class("m-2"),
 				app.Br(),
 				app.Label().For("new-flush-rating").Text("Rating (1-worst, 10-best)").Class("m-2"),
 				app.Select().ID("new-flush-rating").Class("m-2").Body(
@@ -339,17 +353,19 @@ func (c *NewFlushContainer) OnMount(ctx app.Context) {
 
 type LinkButton struct {
 	app.Compo
-	Text string
-	Location string
+	Text          string
+	Location      string
 	AdditionalCss string
 }
+
 func (b *LinkButton) Render() app.UI {
 	if b.AdditionalCss != "" {
-		return app.Button().Text(b.Text).Class(b.AdditionalCss + " " + YellowButtonCss,
-			).OnClick(b.onClick)
+		return app.Button().
+			Text(b.Text).
+			Class(b.AdditionalCss + " " + YellowButtonCss).
+			OnClick(b.onClick)
 	}
-	return app.Button().Text(b.Text).Class(YellowButtonCss,
-		).OnClick(b.onClick)
+	return app.Button().Text(b.Text).Class(YellowButtonCss).OnClick(b.onClick)
 }
 func (b *LinkButton) onClick(ctx app.Context, e app.Event) {
 	app.Window().Set("location", b.Location)
@@ -358,9 +374,13 @@ func (b *LinkButton) onClick(ctx app.Context, e app.Event) {
 type SubmitFlushButton struct {
 	app.Compo
 }
+
 func (b *SubmitFlushButton) Render() app.UI {
-	return app.Button().Text("Submit").Class(YellowButtonCss,
-		).ID("submit-flush-button").OnClick(b.onClick)
+	return app.Button().
+		Text("Submit").
+		Class(YellowButtonCss).
+		ID("submit-flush-button").
+		OnClick(b.onClick)
 }
 func (b *SubmitFlushButton) onClick(ctx app.Context, e app.Event) {
 	var creds Creds
@@ -404,6 +424,7 @@ func (b *SubmitFlushButton) onClick(ctx app.Context, e app.Event) {
 type AboutContainer struct {
 	app.Compo
 }
+
 func (a *AboutContainer) Render() app.UI {
 	return app.Div().Body(
 		app.Div().Body(
@@ -411,13 +432,20 @@ func (a *AboutContainer) Render() app.UI {
 			app.Br(),
 			app.P().Text("Application for tracking toilet flushes."),
 			app.P().Text("You can use it to save them, rate them, check your toilet stats."),
-			app.P().Text("The app will show you statistics like total time spent, average time spent, % times with phone used etc."),
+			app.P().
+				Text("The app will show you statistics like total time spent, average time spent, % times with phone used etc."),
 			app.Br(),
 			app.P().Text("App is still under development. New features can be added."),
-			app.P().Text("App can be 'installed' - it will appear on computer's program list or on phone home screen."),
+			app.P().
+				Text("App can be 'installed' - it will appear on computer's program list or on phone home screen."),
 			app.Br(),
-			&LinkButton{Text: "Login/Register", Location: "login", AdditionalCss: "hover:bg-yellow-700"},
-		).ID("about-container").Class("flex flex-col p-4 shadow-lg rounded-lg"),
+			&LinkButton{
+				Text:          "Login/Register",
+				Location:      "login",
+				AdditionalCss: "hover:bg-yellow-700",
+			},
+		).
+			ID("about-container").Class("flex flex-col p-4 shadow-lg rounded-lg"),
 	).Class(CenteringDivCss)
 }
 
@@ -445,21 +473,21 @@ func FLushTable(flushes []Flush) app.UI {
 		}
 		divs = append(divs,
 			app.Div().Body(
-				app.P().Text("Time: " + flush.TimeStart.Format(
-					"2006-01-02 15:04") + " - " + flush.TimeEnd.Format("2006-01-02 15:04")),
-				app.P().Text("Rating: " + strconv.Itoa(flush.Rating)),
-				app.P().Text("Phone used: " + phoneUsed),
-				app.P().Text("Note: '" + flush.Note + "'"),
+				app.P().Text("Time: "+flush.TimeStart.Format(
+					"2006-01-02 15:04")+" - "+flush.TimeEnd.Format("2006-01-02 15:04")),
+				app.P().Text("Rating: "+strconv.Itoa(flush.Rating)),
+				app.P().Text("Phone used: "+phoneUsed),
+				app.P().Text("Note: '"+flush.Note+"'"),
 			).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg"),
 		)
 	}
 	statsDiv := app.Div().Body(
-		app.P().Text("Total flushes: " + strconv.Itoa(count)),
-		app.P().Text("Total time: " + strconv.Itoa(int(totalTime.Minutes())) + " minutes"),
-		app.P().Text("Mean time: " + strconv.Itoa(int(totalTime.Minutes()) / count) + " minutes"),
-		app.P().Text("Mean rating: " + strconv.Itoa(meanRating/count)),
-		app.P().Text("Times with phone used: " + strconv.Itoa(timesWithPhone)),
-		app.P().Text("Percent with phone used: " + strconv.Itoa(timesWithPhone * 100 / count) + "%"),
+		app.P().Text("Total flushes: "+strconv.Itoa(count)),
+		app.P().Text("Total time: "+strconv.Itoa(int(totalTime.Minutes()))+" minutes"),
+		app.P().Text("Mean time: "+strconv.Itoa(int(totalTime.Minutes())/count)+" minutes"),
+		app.P().Text("Mean rating: "+strconv.Itoa(meanRating/count)),
+		app.P().Text("Times with phone used: "+strconv.Itoa(timesWithPhone)),
+		app.P().Text("Percent with phone used: "+strconv.Itoa(timesWithPhone*100/count)+"%"),
 	).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg font-bold")
 	divs = append([]app.UI{statsDiv}, divs...)
 	return app.Div().Body(divs...)

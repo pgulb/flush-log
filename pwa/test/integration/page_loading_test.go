@@ -7,7 +7,7 @@ import (
 	"github.com/go-rod/rod/lib/launcher"
 )
 
-func TestLoadPages(t *testing.T)() {
+func TestLoadPages(t *testing.T) {
 	for _, url := range Endpoints() {
 		u := launcher.New().Bin(LauncherSystemBrowser()).MustLaunch()
 		b := rod.New().ControlURL(u).MustConnect()
@@ -17,7 +17,7 @@ func TestLoadPages(t *testing.T)() {
 	}
 }
 
-func TestCheckForErrorDivId(t *testing.T)() {
+func TestCheckForErrorDivId(t *testing.T) {
 	for _, url := range Endpoints() {
 		u := launcher.New().Bin(LauncherSystemBrowser()).MustLaunch()
 		b := rod.New().ControlURL(u).MustConnect()

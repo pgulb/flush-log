@@ -15,7 +15,7 @@ func TestBasicAuth(t *testing.T) {
 		{
 			"username": "test",
 			"password": "test",
-			"expected":  "dGVzdDp0ZXN0",
+			"expected": "dGVzdDp0ZXN0",
 		},
 		{
 			"username": "hergo45uhg324uhg5_123123",
@@ -47,40 +47,40 @@ func TestCloseBody(t *testing.T) {
 func TestAuthorizedRequest(t *testing.T) {
 	cases := []map[string]interface{}{
 		{
-			"method":   "GET",
-			"url":      "http://localhost",
+			"method":    "GET",
+			"url":       "http://localhost",
 			"basicAuth": f.BasicAuth("test", "test"),
-			"expected":  http.Request{
+			"expected": http.Request{
 				Method: "GET",
-				URL:    &url.URL{
+				URL: &url.URL{
 					Scheme: "http",
-					Host: "localhost",
+					Host:   "localhost",
 				},
 				Header: http.Header{"Authorization": []string{"Basic dGVzdDp0ZXN0"}},
 			},
 		},
 		{
-			"method":   "POST",
-			"url":      "https://example.com",
+			"method":    "POST",
+			"url":       "https://example.com",
 			"basicAuth": f.BasicAuth("test2", "test2"),
-			"expected":  http.Request{
+			"expected": http.Request{
 				Method: "POST",
-				URL:    &url.URL{
+				URL: &url.URL{
 					Scheme: "https",
-					Host: "example.com",
+					Host:   "example.com",
 				},
 				Header: http.Header{"Authorization": []string{"Basic dGVzdDI6dGVzdDI="}},
 			},
 		},
 		{
-			"method":   "PUT",
-			"url":      "https://localhost:1234",
+			"method":    "PUT",
+			"url":       "https://localhost:1234",
 			"basicAuth": f.BasicAuth("test3", "test3"),
-			"expected":  http.Request{
+			"expected": http.Request{
 				Method: "PUT",
-				URL:    &url.URL{
+				URL: &url.URL{
 					Scheme: "https",
-					Host: "localhost:1234",
+					Host:   "localhost:1234",
 				},
 				Header: http.Header{"Authorization": []string{"Basic dGVzdDM6dGVzdDM="}},
 			},
@@ -98,8 +98,17 @@ func TestAuthorizedRequest(t *testing.T) {
 		if req.Method != c["expected"].(http.Request).Method {
 			t.Fatal("expected", c["expected"].(http.Request).Method, "got", req.Method)
 		}
-		if req.Header.Get("Authorization") != c["expected"].(http.Request).Header.Get("Authorization") {
-			t.Fatal("expected", c["expected"].(http.Request).Header.Get("Authorization"), "got", req.Header.Get("Authorization"))
+		if req.Header.Get(
+			"Authorization",
+		) != c["expected"].(http.Request).Header.Get(
+			"Authorization",
+		) {
+			t.Fatal(
+				"expected",
+				c["expected"].(http.Request).Header.Get("Authorization"),
+				"got",
+				req.Header.Get("Authorization"),
+			)
 		}
 	}
 }

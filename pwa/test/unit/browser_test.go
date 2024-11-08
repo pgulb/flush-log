@@ -42,7 +42,7 @@ func TestValidateRegistryCreds(t *testing.T) {
 	} {
 		if err := f.ValidateRegistryCreds(
 			c[0].(string), c[1].(string), c[2].(string), c[3].(f.LastTriedCreds),
-			); err == nil {
+		); err == nil {
 			t.Fatal("should error on already used creds")
 		}
 	}
@@ -110,7 +110,7 @@ func TestValidateFlush(t *testing.T) {
 			TimeEnd:   time.Now(),
 			Rating:    5,
 			PhoneUsed: true,
-			Note:      `asdasdasdasdasdasdasdasdasdasdasda
+			Note: `asdasdasdasdasdasdasdasdasdasdasda
 			sdasdasdasdasdasdasdasdasdasdasdasdasdasdasdas
 			dasdasdasdasdasdasdasdasdasdasdasdasdasd`, // too long
 		},

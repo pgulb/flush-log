@@ -32,9 +32,9 @@ func LauncherSystemBrowser() string {
 
 func LoginPage() (*rod.Page, *rod.Browser) {
 	log.Println("using LoginPage()")
-    u := launcher.New().Bin(LauncherSystemBrowser()).MustLaunch()
+	u := launcher.New().Bin(LauncherSystemBrowser()).MustLaunch()
 	b := rod.New().ControlURL(u).MustConnect()
-	p := b.MustPage(os.Getenv("GOAPP_URL")+"/login")
+	p := b.MustPage(os.Getenv("GOAPP_URL") + "/login")
 	go p.EachEvent(func(e *proto.RuntimeConsoleAPICalled) {
 		if e.Type == proto.RuntimeConsoleAPICalledTypeLog {
 			fmt.Println("BROWSER:", p.MustObjectsToJSON(e.Args))
@@ -100,7 +100,7 @@ func RegisterAndGoToNew(user string, pass string,
 	repeatPass string) (*rod.Page, *rod.Browser) {
 	log.Println("using RegisterAndGoToNew()")
 	p, b := Register(user, pass, repeatPass)
-	p.Navigate(os.Getenv("GOAPP_URL")+"/new")
+	p.Navigate(os.Getenv("GOAPP_URL") + "/new")
 	err := p.WaitStable(time.Second * 2)
 	if err != nil {
 		log.Fatal(err)

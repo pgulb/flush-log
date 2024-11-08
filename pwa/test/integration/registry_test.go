@@ -7,7 +7,7 @@ import (
 
 func TestRegister(t *testing.T) {
 	p, b := Register("user_registry_test", "pass_registry_test",
-	"pass_registry_test")
+		"pass_registry_test")
 	defer b.MustClose()
 	defer p.MustClose()
 	e := p.MustElement("#hidden-hello")
@@ -34,7 +34,7 @@ func TestRegisterEmptyUsername(t *testing.T) {
 	}
 }
 
-func TestRegisterShortPass(t *testing.T)()  {
+func TestRegisterShortPass(t *testing.T) {
 	p, b := Register("user_registry_test2", "asd", "asd")
 	defer b.MustClose()
 	defer p.MustClose()
@@ -43,7 +43,7 @@ func TestRegisterShortPass(t *testing.T)()  {
 	}
 }
 
-func TestRegisterEmptyPass(t *testing.T)()  {
+func TestRegisterEmptyPass(t *testing.T) {
 	p, b := Register("user_registry_test3", "", "")
 	defer b.MustClose()
 	defer p.MustClose()
@@ -52,21 +52,21 @@ func TestRegisterEmptyPass(t *testing.T)()  {
 	}
 }
 
-func TestRegisterPasswordsDiffer(t *testing.T)()  {
+func TestRegisterPasswordsDiffer(t *testing.T) {
 	p, b := Register("user_registry_test3",
 		"asdasdasdasdasddasd", "qweqweqweqweqwe")
-		defer b.MustClose()
-		defer p.MustClose()
+	defer b.MustClose()
+	defer p.MustClose()
 	if err := CheckErrorDivText(p, "passwords don't match"); err != nil {
 		t.Fatal(err)
 	}
 }
 
-func TestRegisterUsernameTaken(t *testing.T)()  {
+func TestRegisterUsernameTaken(t *testing.T) {
 	p, b := Register("user_registry_test3", "pass_registry_test3",
-	"pass_registry_test3")
+		"pass_registry_test3")
 	p2, b2 := Register("user_registry_test3", "pass_registry_test3",
-	"pass_registry_test3")
+		"pass_registry_test3")
 	defer b2.MustClose()
 	defer p2.MustClose()
 	defer b.MustClose()
@@ -76,9 +76,9 @@ func TestRegisterUsernameTaken(t *testing.T)()  {
 	}
 }
 
-func TestRegisterSameCredsTwoTimes(t *testing.T)()  {
+func TestRegisterSameCredsTwoTimes(t *testing.T) {
 	p, b := RegisterDoubleClickButton("asd", "asd",
-	"asd")
+		"asd")
 	defer b.MustClose()
 	defer p.MustClose()
 	if err := CheckErrorDivText(p, "you already tried those credentials"); err != nil {

@@ -168,10 +168,10 @@ func GetFlushes(ctx app.Context) ([]Flush, error) {
 	temp := []struct {
 		TimeStart string `json:"time_start"`
 		TimeEnd   string `json:"time_end"`
-		Rating    int       `json:"rating"`
-		PhoneUsed bool      `json:"phone_used"`
-		Note      string    `json:"note"`
-		}{}
+		Rating    int    `json:"rating"`
+		PhoneUsed bool   `json:"phone_used"`
+		Note      string `json:"note"`
+	}{}
 	err = json.Unmarshal(bytes, &temp)
 	if err != nil {
 		return nil, err
