@@ -69,6 +69,7 @@ func (r *RegisterContainer) Render() app.UI {
 			&buttonRegister{},
 			app.P().Text("").Class("text-red-500").ID("register-error"),
 		).Class(InviCss).ID("register-container"),
+		&LoadingWidget{id: "register-loading"},
 	)
 }
 
@@ -186,6 +187,7 @@ func (l *LoginContainer) Render() app.UI {
 				&buttonLogin{},
 				&buttonShowRegister{},
 			),
+			&LoadingWidget{id: "login-loading"},
 		),
 	).Class("p-4 text-center text-xl shadow-lg bg-white rounded-lg").ID("login-container"),
 		&RegisterContainer{},
@@ -204,6 +206,7 @@ func (b *buttonLogin) Render() app.UI {
 func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 	loginSeconds := 60
 	log.Println("Trying to log in...")
+	ShowLoading("login-loading")
 	if app.Window().GetElementByID("remember-me").Get("checked").Bool() {
 		log.Println("remember-me checked")
 		loginSeconds = 604800 // week
@@ -213,10 +216,12 @@ func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 	user, pass := GetLoginCreds()
 	err := ValidateLoginCreds(user, pass, lastCreds)
 	if err != nil {
+		Hide("login-loading")
 		ShowErrorDiv(ctx, err, 1)
 		return
 	}
 	ctx.Async(func() {
+		defer Hide("login-loading")
 		status, basic_auth, err := TryLogin(user, pass)
 		if err != nil {
 			ShowErrorDiv(ctx, err, 1)
@@ -254,15 +259,18 @@ func (b *buttonRegister) Render() app.UI {
 }
 func (b *buttonRegister) onClick(ctx app.Context, e app.Event) {
 	log.Println("Trying to register...")
+	ShowLoading("register-loading")
 	lastCreds := LastTriedCreds{}
 	ctx.GetState("lastUsedCredsRegister", &lastCreds)
 	user, pass, repeatPass := GetRegisterCreds()
 	err := ValidateRegistryCreds(user, pass, repeatPass, lastCreds)
 	if err != nil {
+		Hide("register-loading")
 		ShowErrorDiv(ctx, err, 1)
 		return
 	}
 	ctx.Async(func() {
+		defer Hide("register-loading")
 		status, basic_auth, err := TryRegister(user, pass)
 		log.Println("register status code: ", status)
 		if err != nil {
@@ -340,6 +348,7 @@ func (c *NewFlushContainer) Render() app.UI {
 					"new-flush-note").MaxLength(100),
 				app.Br(),
 				&SubmitFlushButton{},
+				&LoadingWidget{id: "new-flush-loading"},
 			).Class("p-4 text-center text-xl shadow-lg bg-white rounded-lg"),
 			app.Br(),
 			&LinkButton{Text: "Back to Home Screen", Location: "."},
@@ -390,9 +399,11 @@ func (b *SubmitFlushButton) Render() app.UI {
 }
 func (b *SubmitFlushButton) onClick(ctx app.Context, e app.Event) {
 	var creds Creds
+	ShowLoading("new-flush-loading")
 	ctx.GetState("creds", &creds)
 	log.Println("Logged in: ", creds.LoggedIn)
 	if !creds.LoggedIn {
+		Hide("new-flush-loading")
 		app.Window().Set("location", "login")
 		return
 	}
@@ -403,15 +414,18 @@ func (b *SubmitFlushButton) onClick(ctx app.Context, e app.Event) {
 		app.Window().GetElementByID("new-flush-phone-used").Get("checked").Bool(),
 		app.Window().GetElementByID("new-flush-note").Get("value").String())
 	if err != nil {
+		Hide("new-flush-loading")
 		ShowErrorDiv(ctx, err, 2)
 		return
 	}
 	err = ValidateFlush(flush)
 	if err != nil {
+		Hide("new-flush-loading")
 		ShowErrorDiv(ctx, err, 1)
 		return
 	}
 	ctx.Async(func() {
+		defer Hide("new-flush-loading")
 		statusCode, err := TryAddFlush(creds, flush)
 		log.Println("Flush add statusCode: ", statusCode)
 		if err != nil {
@@ -450,9 +464,8 @@ func (a *AboutContainer) Render() app.UI {
 				Location:      "login",
 				AdditionalCss: "hover:bg-yellow-700",
 			},
-		).
-			ID("about-container").Class("flex flex-col p-4 shadow-lg rounded-lg"),
-	).Class(CenteringDivCss)
+		).Class("flex flex-col p-4 shadow-lg rounded-lg"),
+	).Class(CenteringDivCss).ID("about-container")
 }
 
 func FLushTable(flushes []Flush) app.UI {
