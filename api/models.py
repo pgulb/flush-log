@@ -37,7 +37,11 @@ class Flush(BaseModel):
     @field_validator("time_end")
     @classmethod
     def validate_time_end(cls, v, info: ValidationInfo):
-        if datetime.fromisoformat(v) < datetime.fromisoformat(info.data["time_start"]):
+        try:
+            time_start = info.data["time_start"]
+        except KeyError as e:
+            raise ValueError("Probably wrong time format") from e
+        if datetime.fromisoformat(v) < datetime.fromisoformat(time_start):
             raise ValueError("End time must be after start time")
         return v
 
