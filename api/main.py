@@ -56,6 +56,12 @@ def filter_from_flush(credentials: HTTPBasicCredentials, flush: Flush) -> dict:
     }
 
 
+def filter_from_user(credentials: HTTPBasicCredentials) -> dict:
+    return {
+        "_id": credentials.username,
+    }
+
+
 def check_creds(credentials: HTTPBasicCredentials):
     database = client.flush
     users = database.users
@@ -193,3 +199,23 @@ def get_flushes(credentials: HTTPBasicCredentials = Depends(security)):
 def get_flush_count(username: str) -> int:
     flushes = client.flush.flushes
     return flushes.count_documents({"user_id": username})
+
+
+@app.put("/pass_change", status_code=status.HTTP_200_OK)
+def update_password(
+    user_new_pass: User, credentials: HTTPBasicCredentials = Depends(security)
+):
+    check_creds(credentials)
+    users = client.flush.users
+    try:
+        result = users.update_one(
+            filter=filter_from_user(credentials),
+            update={"$set": {"pass_hash": hash_password(user_new_pass.password)}},
+        )
+        if result.matched_count == 1:
+            return Response(status_code=status.HTTP_200_OK)
+        raise Exception(f"matched_count == {result.matched_count}")
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Error changing password"
+        ) from e
