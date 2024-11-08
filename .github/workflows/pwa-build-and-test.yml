@@ -1,4 +1,4 @@
-name: Build PWA image
+name: Build and test PWA image
 
 on:
   push:
