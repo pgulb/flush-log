@@ -89,18 +89,13 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 	} else {
 		app.Window().GetElementByID("root-container").Set("className", RootContainerCss)
 		app.Window().GetElementByID("about-container").Set("className", "invisible fixed")
-		hello, err := TryAuthentication(ctx)
-		if err != nil {
-			ShowErrorDiv(ctx, err, 1)
-			return
-		}
 		ShowLoading("flushes-loading")
 		defer Hide("flushes-loading")
 		flushes, err := GetFlushes(ctx)
 		if err != nil {
 			ShowErrorDiv(ctx, err, 1)
 		} else {
-			app.Window().GetElementByID("hidden-hello").Set("innerHTML", hello)
+			app.Window().GetElementByID("hidden-hello").Set("innerHTML", "hello!")
 			b.FlushList = FLushTable(flushes)
 		}
 	}
@@ -144,18 +139,13 @@ func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 	ctx.Async(func() {
 		if creds.LoggedIn {
 			log.Println("Getting new API response...")
-			hello, err := TryAuthentication(ctx)
-			if err != nil {
-				ShowErrorDiv(ctx, err, 1)
-				return
-			}
 			ShowLoading("flushes-loading")
 			defer Hide("flushes-loading")
 			flushes, err := GetFlushes(ctx)
 			if err != nil {
 				ShowErrorDiv(ctx, err, 1)
 			} else {
-				app.Window().GetElementByID("hidden-hello").Set("innerHTML", hello)
+				app.Window().GetElementByID("hidden-hello").Set("innerHTML", "hello!")
 				b.RootContainer.FlushList = FLushTable(flushes)
 			}
 		}
