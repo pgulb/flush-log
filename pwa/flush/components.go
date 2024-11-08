@@ -473,8 +473,7 @@ func FLushTable(flushes []Flush) app.UI {
 		}
 		divs = append(divs,
 			app.Div().Body(
-				app.P().Text("Time: "+flush.TimeStart.Format(
-					"2006-01-02 15:04")+" - "+flush.TimeEnd.Format("2006-01-02 15:04")),
+				timeDiv(flush),
 				app.P().Text("Rating: "+strconv.Itoa(flush.Rating)),
 				app.P().Text("Phone used: "+phoneUsed),
 				app.P().Text("Note: '"+flush.Note+"'"),
@@ -491,4 +490,26 @@ func FLushTable(flushes []Flush) app.UI {
 	).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg font-bold")
 	divs = append([]app.UI{statsDiv}, divs...)
 	return app.Div().Body(divs...)
+}
+
+func timeDiv(flush Flush) app.UI {
+	flushDuration := strconv.FormatFloat(
+		flush.TimeEnd.Sub(flush.TimeStart).Minutes(),
+		'f',
+		0,
+		64,
+	)
+	if flush.TimeStart.Day() == flush.TimeEnd.Day() {
+		return app.Div().Body(
+			app.P().Text("Time: ").Class("font-bold inline"),
+			app.P().Text(flushDuration+" minutes, "+flush.TimeStart.Format(
+				"2006-01-02 15:04")+"-"+flush.TimeEnd.Format("15:04")).Class("inline"),
+		)
+	} else {
+		return app.Div().Body(
+			app.P().Text("Time: ").Class("font-bold inline"),
+			app.P().Text(flushDuration+" minutes, "+flush.TimeStart.Format(
+				"2006-01-02 15:04")+" - "+flush.TimeEnd.Format("2006-01-02 15:04")).Class("inline"),
+		)
+	}
 }
