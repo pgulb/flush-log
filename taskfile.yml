@@ -16,6 +16,10 @@ tasks:
   logs:
     cmds:
       - docker compose logs -f
+  test-api-unit:
+    cmds:
+      - uv run pytest tests/unit/ -v
+    dir: api
   test-api-mock:
     cmds:
       - uv run pytest tests/test_mock.py -v
