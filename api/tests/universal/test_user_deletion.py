@@ -1,9 +1,12 @@
+from datetime import datetime, timedelta
+from random import randint
+
 import httpx
 from fastapi import status
 from fastapi.testclient import TestClient
 from universal.helpers import create_user
 
-from api.main import app
+from api.main import app, get_flush_count
 
 client = TestClient(app)
 
@@ -44,3 +47,37 @@ def test_delete_nonexisting_user():
             auth=httpx.BasicAuth(username=test_user, password=test_users[test_user]),
         )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+def test_delete_check_cascading_deletion():
+    flushes_before_deletion = 9
+    flushes_after_deletion = 0
+    test_users = {
+        "testdeletecheckcascade": "asdasdasdasd",
+        "testdeletecheckcascade2": "dddddddddddddddddddd",
+    }
+    for test_user in test_users.keys():
+        create_user(client, test_user, test_users[test_user])
+        auth = httpx.BasicAuth(username=test_user, password=test_users[test_user])
+        for i in range(9):
+            response = client.put(
+                "/flush",
+                json={
+                    "time_start": datetime.now().isoformat(timespec="minutes"),
+                    "time_end": (datetime.now() + timedelta(minutes=i)).isoformat(
+                        timespec="minutes"
+                    ),
+                    "rating": randint(1, 10),
+                    "note": "aaaaaaaa",
+                    "phone_used": True,
+                },
+                auth=auth,
+            )
+            assert response.status_code == status.HTTP_201_CREATED
+        assert get_flush_count(test_user) == flushes_before_deletion
+        response = client.delete(
+            "/user",
+            auth=httpx.BasicAuth(username=test_user, password=test_users[test_user]),
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert get_flush_count(test_user) == flushes_after_deletion
