@@ -1,9 +1,12 @@
 package flush
 
 import (
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/maxence-charriere/go-app/v10/pkg/app"
@@ -559,6 +562,9 @@ func (s *SettingsContainer) Render() app.UI {
 	return app.Div().Body(
 		app.Div().Body(
 			app.H1().Text("App Settings").Class("text-2xl m-2"),
+			&ExportButton{ExportFormat: "JSON"},
+			app.Br(),
+			&ExportButton{ExportFormat: "CSV"},
 			app.Br(),
 			app.Hr(),
 			app.P().Text("Below settings are stored in your browser only").Class("font-bold m-2"),
@@ -613,4 +619,39 @@ func (c *PhoneUsedDefaultCheckbox) OnMount(ctx app.Context) {
 	if set == "true" {
 		app.Window().GetElementByID("phone-used-default").Set("checked", true)
 	}
+}
+
+type ExportButton struct {
+	app.Compo
+	ExportFormat string
+}
+
+func (b *ExportButton) Render() app.UI {
+	return app.Button().
+		Text(fmt.Sprintf("Export to %s", b.ExportFormat)).
+		Class(YellowButtonCss + " hover:bg-yellow-700 m-1").
+		OnClick(b.OnClick)
+}
+func (b *ExportButton) OnClick(ctx app.Context, e app.Event) {
+	var creds Creds
+	ctx.GetState("creds", &creds)
+	decoded, err := base64.StdEncoding.DecodeString(creds.UserColonPass)
+	if err != nil {
+		ShowErrorDiv(ctx, err, 1)
+		return
+	}
+	apiUrl, err := GetApiUrl()
+	if err != nil {
+		ShowErrorDiv(ctx, err, 1)
+		return
+	}
+	apiUrl = strings.Replace(apiUrl, "http://", fmt.Sprintf("http://%s@", decoded), 1)
+	apiUrl = strings.Replace(apiUrl, "https://", fmt.Sprintf("https://%s@", decoded), 1)
+	completeUrl := fmt.Sprintf(
+		"%s/flushes?export_format=%s",
+		apiUrl,
+		strings.ToLower(b.ExportFormat),
+	)
+	app.Window().
+		Call("open", completeUrl)
 }
