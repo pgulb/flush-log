@@ -105,17 +105,24 @@ func (b *RootContainer) Render() app.UI {
 		app.P().Text("empty").Class("invisible fixed").ID("hidden-hello"),
 		app.Div().Body(
 			app.H1().Text("Flush Log").Class("text-2xl"),
-			&buttonLogout{},
+			app.Div().Body(
+				&buttonLogout{},
+				&LinkButton{
+					Text:          "Settings",
+					Location:      "settings",
+					AdditionalCss: "hover:bg-yellow-700 m-1",
+				},
+				&LinkButton{
+					Text:          "(+)",
+					Location:      "new",
+					AdditionalCss: "hover:bg-yellow-700 m-1",
+				},
+			).ID("root-buttons-container").Class("flex flex-col absolute top-4 right-4"),
 			app.P().Text("Tracked flushes:").Class("py-2"),
 			&LoadingWidget{id: "flushes-loading"},
 			b.FlushList,
 			app.Div().Body(
 				b.buttonUpdate.Render(),
-				&LinkButton{
-					Text:          "(+)",
-					Location:      "new",
-					AdditionalCss: "absolute bottom-4 right-4 hover:bg-yellow-700",
-				},
 			).
 				Class("m-10"),
 		).Class("invisible fixed").ID("root-container"),
@@ -293,7 +300,7 @@ type buttonLogout struct {
 
 func (b *buttonLogout) Render() app.UI {
 	return app.Button().Text("Log out").OnClick(b.onClick).Class(
-		"font-bold border-2 border-white p-2 rounded absolute top-4 right-4")
+		"font-bold border-2 border-white p-2 rounded")
 }
 func (b *buttonLogout) onClick(ctx app.Context, e app.Event) {
 	ctx.SetState("creds", Creds{LoggedIn: false}).PersistWithEncryption()
