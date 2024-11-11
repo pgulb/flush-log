@@ -108,3 +108,16 @@ func RegisterAndGoToNew(user string, pass string,
 	log.Println("return from RegisterAndGoToNew()")
 	return p, b
 }
+
+func RegisterAndGoToSettings(user string, pass string,
+	repeatPass string) (*rod.Page, *rod.Browser) {
+	log.Println("using RegisterAndGoToSettings()")
+	p, b := Register(user, pass, repeatPass)
+	p.Navigate(os.Getenv("GOAPP_URL") + "/settings")
+	err := p.WaitStable(time.Second * 2)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("return from RegisterAndGoToSettings()")
+	return p, b
+}
