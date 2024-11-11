@@ -221,3 +221,24 @@ func ChangePass(newPass string, currentCreds string) error {
 	}
 	return nil
 }
+
+func RemoveAccount(currentCreds string) error {
+	apiUrl, err := GetApiUrl()
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("DELETE", apiUrl+"/user", nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Authorization", "Basic "+currentCreds)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer CloseBody(resp)
+	if resp.StatusCode >= 400 {
+		return errors.New("failed to remove user account")
+	}
+	return nil
+}

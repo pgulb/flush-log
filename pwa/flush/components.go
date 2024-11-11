@@ -563,6 +563,7 @@ func (s *SettingsContainer) Render() app.UI {
 		app.Div().Body(
 			app.H1().Text("App Settings").Class("text-2xl m-2"),
 			&PassChangeContainer{},
+			app.Br(),
 			app.Hr(),
 			app.Br(),
 			app.P().
@@ -573,11 +574,16 @@ func (s *SettingsContainer) Render() app.UI {
 			&ExportButton{ExportFormat: "CSV"},
 			app.Br(),
 			app.Hr(),
+			app.Br(),
 			app.P().Text("Below settings are stored in your browser only").Class("font-bold m-2"),
 			app.Label().
 				Text("Check 'phone used' option by default").
 				For("phone-used-default").Class("m-2"),
 			&PhoneUsedDefaultCheckbox{},
+			app.Br(),
+			app.Hr(),
+			app.Br(),
+			&RemoveAccountContainer{},
 		).
 			Class(WindowDivCss),
 		app.Br(),
@@ -718,4 +724,46 @@ func (c *ChangePassButton) OnClick(ctx app.Context, e app.Event) {
 	ctx.SetState("creds", Creds{LoggedIn: false}).PersistWithEncryption()
 	Hide("settings-loading")
 	app.Window().Set("location", "login")
+}
+
+type RemoveAccountContainer struct {
+	app.Compo
+}
+
+func (r *RemoveAccountContainer) Render() app.UI {
+	return app.Div().Body(
+		app.P().
+			Text("Remove account").
+			Class("m-1"),
+		app.Input().Placeholder("Type 'byebye' here").ID("remove-account-byebye").Class("m-1"),
+		&RemoveAccountButton{},
+	).ID("remove-account-container").Class("flex flex-col")
+}
+
+type RemoveAccountButton struct {
+	app.Compo
+}
+
+func (c *RemoveAccountButton) Render() app.UI {
+	return app.Button().
+		Text("Remove account").
+		Class("font-bold bg-red-500 p-2 rounded text-white hover:bg-red-700 m-1").
+		OnClick(c.OnClick)
+}
+func (c *RemoveAccountButton) OnClick(ctx app.Context, e app.Event) {
+	var creds Creds
+	ShowLoading("settings-loading")
+	ctx.GetState("creds", &creds)
+	if app.Window().GetElementByID("remove-account-byebye").Get("value").String() != "byebye" {
+		Hide("settings-loading")
+		ShowErrorDiv(ctx, errors.New("Type 'byebye' before deleting account"), 1)
+		return
+	}
+	if err := RemoveAccount(creds.UserColonPass); err != nil {
+		ShowErrorDiv(ctx, err, 1)
+		Hide("settings-loading")
+		return
+	}
+	ctx.SetState("creds", Creds{LoggedIn: false}).PersistWithEncryption()
+	app.Window().Set("location", ".")
 }
