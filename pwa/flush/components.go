@@ -500,7 +500,9 @@ func FlushTable(flushes []Flush) app.UI {
 			app.Div().Body(
 				timeDiv(flush),
 				app.P().Text("Rating: "+strconv.Itoa(flush.Rating)),
-				&RemoveFlushButton{ID: flush.ID},
+				app.Div().Body(
+					&RemoveFlushButton{ID: flush.ID},
+				).Class("max-w-1/6"),
 				app.P().Text("Phone used: "+phoneUsed),
 				app.P().Text("Note: '"+flush.Note+"'"),
 			).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg").ID("div-"+flush.ID),
@@ -547,7 +549,7 @@ type RemoveFlushButton struct {
 }
 
 func (b *RemoveFlushButton) Render() app.UI {
-	return app.Button().Text(b.T).Class(RemoveButtonCss + " max-w-10").ID(b.ID).OnClick(b.onClick)
+	return app.Button().Text(b.T).Class(RemoveButtonCss).ID(b.ID).OnClick(b.onClick)
 }
 func (b *RemoveFlushButton) OnMount(ctx app.Context) {
 	b.T = "🗑️"
@@ -555,7 +557,7 @@ func (b *RemoveFlushButton) OnMount(ctx app.Context) {
 func (b *RemoveFlushButton) onClick(ctx app.Context, e app.Event) {
 	log.Println("Flush remove button pressed...")
 	if b.T == "🗑️" {
-		app.Window().GetElementByID(b.ID).Set("className", RemoveButtonCss+" max-w-14")
+		app.Window().GetElementByID(b.ID).Set("className", RemoveButtonCss)
 		b.T = "DEL?🗑️"
 		return
 	} else if b.T == "DEL?🗑️" {
@@ -598,36 +600,40 @@ type SettingsContainer struct {
 func (s *SettingsContainer) Render() app.UI {
 	return app.Div().Body(
 		app.Div().Body(
-			app.H1().Text("App Settings").Class("text-2xl m-2"),
-			&PassChangeContainer{},
+			app.Div().Body(
+				app.H1().Text("App Settings").Class("text-2xl m-2"),
+				&PassChangeContainer{},
+				app.Br(),
+				app.Hr(),
+				app.Br(),
+				app.P().
+					Text("You can export your flushes into formats that can be read by other apps").
+					Class("m-1"),
+				&ExportButton{ExportFormat: "JSON"},
+				app.Br(),
+				&ExportButton{ExportFormat: "CSV"},
+				app.Br(),
+				app.Hr(),
+				app.Br(),
+				app.P().
+					Text("Below settings are stored in your browser only").
+					Class("font-bold m-2"),
+				app.Label().
+					Text("Check 'phone used' option by default").
+					For("phone-used-default").Class("m-2"),
+				&PhoneUsedDefaultCheckbox{},
+				app.Br(),
+				app.Hr(),
+				app.Br(),
+				&RemoveAccountContainer{},
+			).
+				Class(WindowDivCss),
 			app.Br(),
-			app.Hr(),
-			app.Br(),
-			app.P().
-				Text("You can export your flushes into formats that can be read by other apps").
-				Class("m-1"),
-			&ExportButton{ExportFormat: "JSON"},
-			app.Br(),
-			&ExportButton{ExportFormat: "CSV"},
-			app.Br(),
-			app.Hr(),
-			app.Br(),
-			app.P().Text("Below settings are stored in your browser only").Class("font-bold m-2"),
-			app.Label().
-				Text("Check 'phone used' option by default").
-				For("phone-used-default").Class("m-2"),
-			&PhoneUsedDefaultCheckbox{},
-			app.Br(),
-			app.Hr(),
-			app.Br(),
-			&RemoveAccountContainer{},
-		).
-			Class(WindowDivCss),
-		app.Br(),
-		&LinkButton{Text: "Back to Home Screen", Location: "."},
-		app.Div().Body(&ErrorContainer{}),
-		&LoadingWidget{id: "settings-loading"},
-	).ID("settings-container").Class(CenteringDivCss + " flex-col")
+			&LinkButton{Text: "Back to Home Screen", Location: "."},
+			&LoadingWidget{id: "settings-loading"},
+		).ID("settings-container").Class(CenteringDivCss+" flex-col"),
+		&ErrorContainer{},
+	)
 }
 func (s *SettingsContainer) OnMount(ctx app.Context) {
 	var creds Creds
