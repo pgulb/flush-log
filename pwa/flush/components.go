@@ -571,6 +571,15 @@ func (s *SettingsContainer) Render() app.UI {
 		&LinkButton{Text: "Back to Home Screen", Location: "."},
 	).ID("settings-container").Class(CenteringDivCss + " flex-col")
 }
+func (s *SettingsContainer) OnMount(ctx app.Context) {
+	var creds Creds
+	ctx.GetState("creds", &creds)
+	log.Println("Logged in: ", creds.LoggedIn)
+	if !creds.LoggedIn {
+		app.Window().Set("location", "login")
+		return
+	}
+}
 
 type PhoneUsedDefaultCheckbox struct {
 	app.Compo
