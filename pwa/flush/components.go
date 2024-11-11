@@ -551,19 +551,18 @@ type SettingsContainer struct {
 func (s *SettingsContainer) Render() app.UI {
 	return app.Div().Body(
 		app.Div().Body(
-			app.H1().Text("App Settings").Class("text-2xl"),
+			app.H1().Text("App Settings").Class("text-2xl m-2"),
 			app.Br(),
 			app.Hr(),
-			app.P().Text("Below settings are stored in your browser only").Class("font-bold"),
+			app.P().Text("Below settings are stored in your browser only").Class("font-bold m-2"),
 			app.Label().
 				Text("Check 'phone used' option by default").
-				For("phone-used-default"),
+				For("phone-used-default").Class("m-2"),
 			&PhoneUsedDefaultCheckbox{},
-			app.Br(),
-			&LinkButton{Text: "Back to Home Screen", Location: "."},
-		).
-			Class(WindowDivCss),
-	).ID("settings-container").Class(CenteringDivCss)
+		).Class(WindowDivCss),
+		app.Br(),
+		&LinkButton{Text: "Back to Home Screen", Location: "."},
+	).ID("settings-container").Class(CenteringDivCss + " flex-col")
 }
 
 type PhoneUsedDefaultCheckbox struct {
