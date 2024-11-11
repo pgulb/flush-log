@@ -8,6 +8,15 @@ tmp/
 web/
 flush-log
 flush-log.exe
+*.exe
 
 # drawio
 .$*
+
+# web static artifacts
+wasm_exec.js
+app-worker.js
+app.js
+app.css
+*.html
+*.webmanifest
