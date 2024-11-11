@@ -1,9 +1,12 @@
 package flush
 
 import (
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/maxence-charriere/go-app/v10/pkg/app"
@@ -13,7 +16,7 @@ const (
 	YellowButtonCss  = "font-bold bg-yellow-500 p-2 rounded text-white mx-1"
 	ErrorDivCss      = "flex flex-row fixed bottom-4 left-4 bg-red-500 text-white p-4 text-xl rounded-lg"
 	CenteringDivCss  = "flex flex-row min-h-screen justify-center items-center"
-	RegisterDivCss   = "p-4 text-center text-xl shadow-lg bg-white rounded-lg mx-10"
+	WindowDivCss     = "p-4 text-center text-xl shadow-lg bg-white rounded-lg mx-10"
 	InviCss          = "fixed invisible"
 	RootContainerCss = "shadow-lg bg-white rounded-lg p-6 min-h-72 relative"
 	LoadingCss       = "flex flex-row justify-center items-center"
@@ -41,7 +44,7 @@ func (b *buttonShowRegister) Render() app.UI {
 		YellowButtonCss + " hover:bg-yellow-700").ID("show-register")
 }
 func (b *buttonShowRegister) onClick(ctx app.Context, e app.Event) {
-	app.Window().GetElementByID("register-container").Set("className", RegisterDivCss)
+	app.Window().GetElementByID("register-container").Set("className", WindowDivCss)
 	app.Window().GetElementByID("login-container").Set("className", InviCss)
 }
 
@@ -105,17 +108,24 @@ func (b *RootContainer) Render() app.UI {
 		app.P().Text("empty").Class("invisible fixed").ID("hidden-hello"),
 		app.Div().Body(
 			app.H1().Text("Flush Log").Class("text-2xl"),
-			&buttonLogout{},
+			app.Div().Body(
+				&buttonLogout{},
+				&LinkButton{
+					Text:          "Settings",
+					Location:      "settings",
+					AdditionalCss: "hover:bg-yellow-700 m-1",
+				},
+				&LinkButton{
+					Text:          "(+)",
+					Location:      "new",
+					AdditionalCss: "hover:bg-yellow-700 m-1",
+				},
+			).ID("root-buttons-container").Class("flex flex-col absolute top-4 right-4"),
 			app.P().Text("Tracked flushes:").Class("py-2"),
 			&LoadingWidget{id: "flushes-loading"},
 			b.FlushList,
 			app.Div().Body(
 				b.buttonUpdate.Render(),
-				&LinkButton{
-					Text:          "(+)",
-					Location:      "new",
-					AdditionalCss: "absolute bottom-4 right-4 hover:bg-yellow-700",
-				},
 			).
 				Class("m-10"),
 		).Class("invisible fixed").ID("root-container"),
@@ -191,7 +201,7 @@ type buttonLogin struct {
 
 func (b *buttonLogin) Render() app.UI {
 	return app.Button().Text("Log in").OnClick(b.onClick).Class(
-		YellowButtonCss + " hover:bg-yellow-700")
+		YellowButtonCss + " hover:bg-yellow-700").ID("login-button")
 }
 func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 	loginSeconds := 60
@@ -293,7 +303,7 @@ type buttonLogout struct {
 
 func (b *buttonLogout) Render() app.UI {
 	return app.Button().Text("Log out").OnClick(b.onClick).Class(
-		"font-bold border-2 border-white p-2 rounded absolute top-4 right-4")
+		"font-bold border-2 border-white p-2 rounded")
 }
 func (b *buttonLogout) onClick(ctx app.Context, e app.Event) {
 	ctx.SetState("creds", Creds{LoggedIn: false}).PersistWithEncryption()
@@ -353,6 +363,11 @@ func (c *NewFlushContainer) OnMount(ctx app.Context) {
 	if !creds.LoggedIn {
 		app.Window().Set("location", "login")
 		return
+	}
+	var set string
+	ctx.GetState("phoneUsedDefault", &set)
+	if set == "true" {
+		app.Window().GetElementByID("new-flush-phone-used").Set("checked", true)
 	}
 }
 
@@ -537,4 +552,218 @@ func (l *LoadingWidget) Render() app.UI {
 		).
 			Class("inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite] text-yellow-500"),
 	).Class(InviCss).ID(l.id)
+}
+
+type SettingsContainer struct {
+	app.Compo
+}
+
+func (s *SettingsContainer) Render() app.UI {
+	return app.Div().Body(
+		app.Div().Body(
+			app.H1().Text("App Settings").Class("text-2xl m-2"),
+			&PassChangeContainer{},
+			app.Br(),
+			app.Hr(),
+			app.Br(),
+			app.P().
+				Text("You can export your flushes into formats that can be read by other apps").
+				Class("m-1"),
+			&ExportButton{ExportFormat: "JSON"},
+			app.Br(),
+			&ExportButton{ExportFormat: "CSV"},
+			app.Br(),
+			app.Hr(),
+			app.Br(),
+			app.P().Text("Below settings are stored in your browser only").Class("font-bold m-2"),
+			app.Label().
+				Text("Check 'phone used' option by default").
+				For("phone-used-default").Class("m-2"),
+			&PhoneUsedDefaultCheckbox{},
+			app.Br(),
+			app.Hr(),
+			app.Br(),
+			&RemoveAccountContainer{},
+		).
+			Class(WindowDivCss),
+		app.Br(),
+		&LinkButton{Text: "Back to Home Screen", Location: "."},
+		app.Div().Body(&ErrorContainer{}),
+		&LoadingWidget{id: "settings-loading"},
+	).ID("settings-container").Class(CenteringDivCss + " flex-col")
+}
+func (s *SettingsContainer) OnMount(ctx app.Context) {
+	var creds Creds
+	ctx.GetState("creds", &creds)
+	log.Println("Logged in: ", creds.LoggedIn)
+	if !creds.LoggedIn {
+		app.Window().Set("location", "login")
+		return
+	}
+}
+
+type PhoneUsedDefaultCheckbox struct {
+	app.Compo
+	Check app.UI
+}
+
+func (c *PhoneUsedDefaultCheckbox) Render() app.UI {
+	c.Check = app.Input().
+		Type("checkbox").
+		ID("phone-used-default").
+		Class("m-2").
+		OnClick(c.OnClick)
+	return c.Check
+}
+func (c *PhoneUsedDefaultCheckbox) OnClick(ctx app.Context, e app.Event) {
+	var set string
+	log.Println("Getting phoneUsedDefault...")
+	ctx.GetState("phoneUsedDefault", &set)
+	if set == "true" {
+		log.Println("Setting phoneUsedDefault to false")
+		ctx.SetState("phoneUsedDefault", "false").Persist()
+	} else {
+		log.Println("Setting phoneUsedDefault to true")
+		ctx.SetState("phoneUsedDefault", "true").Persist()
+	}
+}
+func (c *PhoneUsedDefaultCheckbox) OnMount(ctx app.Context) {
+	var set string
+	log.Println("Getting phoneUsedDefault in OnLoad...")
+	ctx.GetState("phoneUsedDefault", &set)
+	if set == "true" {
+		app.Window().GetElementByID("phone-used-default").Set("checked", true)
+	}
+}
+
+type ExportButton struct {
+	app.Compo
+	ExportFormat string
+}
+
+func (b *ExportButton) Render() app.UI {
+	return app.Button().
+		Text(fmt.Sprintf("Export to %s", b.ExportFormat)).
+		Class(YellowButtonCss + " hover:bg-yellow-700 m-1").
+		OnClick(b.OnClick)
+}
+func (b *ExportButton) OnClick(ctx app.Context, e app.Event) {
+	var creds Creds
+	ctx.GetState("creds", &creds)
+	decoded, err := base64.StdEncoding.DecodeString(creds.UserColonPass)
+	if err != nil {
+		ShowErrorDiv(ctx, err, 1)
+		return
+	}
+	apiUrl, err := GetApiUrl()
+	if err != nil {
+		ShowErrorDiv(ctx, err, 1)
+		return
+	}
+	apiUrl = strings.Replace(apiUrl, "http://", fmt.Sprintf("http://%s@", decoded), 1)
+	apiUrl = strings.Replace(apiUrl, "https://", fmt.Sprintf("https://%s@", decoded), 1)
+	completeUrl := fmt.Sprintf(
+		"%s/flushes?export_format=%s",
+		apiUrl,
+		strings.ToLower(b.ExportFormat),
+	)
+	app.Window().
+		Call("open", completeUrl)
+}
+
+type PassChangeContainer struct {
+	app.Compo
+}
+
+func (p *PassChangeContainer) Render() app.UI {
+	return app.Div().Body(
+		app.P().
+			Text("Change password").
+			Class("m-1"),
+		app.P().
+			Text("You will be prompted to log in again after changing").
+			Class("m-1"),
+		app.Input().Type("password").ID(
+			"chp-password").Placeholder("New password").Class(
+			"m-1",
+		),
+		app.Input().Type("password").ID(
+			"chp-password-repeat").Placeholder("Repeat password").Class(
+			"m-1",
+		),
+		&ChangePassButton{},
+	).ID("passchange-container").Class("flex flex-col")
+}
+
+type ChangePassButton struct {
+	app.Compo
+}
+
+func (c *ChangePassButton) Render() app.UI {
+	return app.Button().
+		Text("Change").
+		Class(YellowButtonCss + " hover:bg-yellow-700 m-1").
+		OnClick(c.OnClick).ID("chp-button")
+}
+func (c *ChangePassButton) OnClick(ctx app.Context, e app.Event) {
+	ShowLoading("settings-loading")
+	newPass := app.Window().GetElementByID("chp-password").Get("value").String()
+	repeatPass := app.Window().GetElementByID("chp-password-repeat").Get("value").String()
+	var creds Creds
+	ctx.GetState("creds", &creds)
+	if err := ValidateChangePass(newPass, repeatPass); err != nil {
+		Hide("settings-loading")
+		ShowErrorDiv(ctx, err, 1)
+		return
+	}
+	if err := ChangePass(newPass, creds.UserColonPass); err != nil {
+		Hide("settings-loading")
+		ShowErrorDiv(ctx, err, 1)
+		return
+	}
+	ctx.SetState("creds", Creds{LoggedIn: false}).PersistWithEncryption()
+	Hide("settings-loading")
+	app.Window().Set("location", "login")
+}
+
+type RemoveAccountContainer struct {
+	app.Compo
+}
+
+func (r *RemoveAccountContainer) Render() app.UI {
+	return app.Div().Body(
+		app.P().
+			Text("Remove account").
+			Class("m-1"),
+		app.Input().Placeholder("Type 'byebye' here").ID("remove-account-byebye").Class("m-1"),
+		&RemoveAccountButton{},
+	).ID("remove-account-container").Class("flex flex-col")
+}
+
+type RemoveAccountButton struct {
+	app.Compo
+}
+
+func (c *RemoveAccountButton) Render() app.UI {
+	return app.Button().
+		Text("Remove account").
+		Class("font-bold bg-red-500 p-2 rounded text-white hover:bg-red-700 m-1").
+		OnClick(c.OnClick).ID("remove-account-button")
+}
+func (c *RemoveAccountButton) OnClick(ctx app.Context, e app.Event) {
+	var creds Creds
+	ShowLoading("settings-loading")
+	ctx.GetState("creds", &creds)
+	if app.Window().GetElementByID("remove-account-byebye").Get("value").String() != "byebye" {
+		Hide("settings-loading")
+		ShowErrorDiv(ctx, errors.New("Type 'byebye' before deleting account"), 1)
+		return
+	}
+	if err := RemoveAccount(creds.UserColonPass); err != nil {
+		ShowErrorDiv(ctx, err, 1)
+		Hide("settings-loading")
+		return
+	}
+	ctx.SetState("creds", Creds{LoggedIn: false}).PersistWithEncryption()
+	app.Window().Set("location", ".")
 }

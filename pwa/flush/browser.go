@@ -128,3 +128,14 @@ func ShowLoading(id string) {
 func Hide(id string) {
 	app.Window().GetElementByID(id).Set("className", InviCss)
 }
+
+func ValidateChangePass(newPass string, repeatPass string) error {
+	if err := ValidateRegistryCreds("placeholder", newPass,
+		repeatPass, LastTriedCreds{}); err != nil {
+		return err
+	}
+	if len([]rune(newPass)) < 8 || len([]rune(newPass)) > 60 {
+		return errors.New("password must be between 8 and 60 characters")
+	}
+	return nil
+}

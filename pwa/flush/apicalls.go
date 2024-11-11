@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -193,4 +194,51 @@ func GetFlushes(ctx app.Context) ([]Flush, error) {
 	log.Println("temporary flush struct: ", temp)
 	log.Println("Flushes: ", flushes)
 	return flushes, nil
+}
+
+func ChangePass(newPass string, currentCreds string) error {
+	apiUrl, err := GetApiUrl()
+	if err != nil {
+		return err
+	}
+	body := []byte(fmt.Sprintf(`
+	{
+		"username": "placeholder",
+		"password": "%s"
+	}`, newPass))
+	req, err := http.NewRequest("PUT", apiUrl+"/pass_change", bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Authorization", "Basic "+currentCreds)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer CloseBody(resp)
+	if resp.StatusCode >= 400 {
+		return errors.New("failed to change password")
+	}
+	return nil
+}
+
+func RemoveAccount(currentCreds string) error {
+	apiUrl, err := GetApiUrl()
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("DELETE", apiUrl+"/user", nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Authorization", "Basic "+currentCreds)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer CloseBody(resp)
+	if resp.StatusCode >= 400 {
+		return errors.New("failed to remove user account")
+	}
+	return nil
 }
