@@ -13,7 +13,7 @@ const (
 	YellowButtonCss  = "font-bold bg-yellow-500 p-2 rounded text-white mx-1"
 	ErrorDivCss      = "flex flex-row fixed bottom-4 left-4 bg-red-500 text-white p-4 text-xl rounded-lg"
 	CenteringDivCss  = "flex flex-row min-h-screen justify-center items-center"
-	RegisterDivCss   = "p-4 text-center text-xl shadow-lg bg-white rounded-lg mx-10"
+	WindowDivCss     = "p-4 text-center text-xl shadow-lg bg-white rounded-lg mx-10"
 	InviCss          = "fixed invisible"
 	RootContainerCss = "shadow-lg bg-white rounded-lg p-6 min-h-72 relative"
 	LoadingCss       = "flex flex-row justify-center items-center"
@@ -41,7 +41,7 @@ func (b *buttonShowRegister) Render() app.UI {
 		YellowButtonCss + " hover:bg-yellow-700").ID("show-register")
 }
 func (b *buttonShowRegister) onClick(ctx app.Context, e app.Event) {
-	app.Window().GetElementByID("register-container").Set("className", RegisterDivCss)
+	app.Window().GetElementByID("register-container").Set("className", WindowDivCss)
 	app.Window().GetElementByID("login-container").Set("className", InviCss)
 }
 
@@ -537,4 +537,54 @@ func (l *LoadingWidget) Render() app.UI {
 		).
 			Class("inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite] text-yellow-500"),
 	).Class(InviCss).ID(l.id)
+}
+
+type SettingsContainer struct {
+	app.Compo
+}
+
+func (s *SettingsContainer) Render() app.UI {
+	return app.Div().Body(
+		app.Div().Body(
+			app.H1().Text("App Settings").Class("text-2xl"),
+			app.Br(),
+			&PhoneUsedDefaultCheckbox{},
+			app.Br(),
+			&LinkButton{Text: "Back to Home Screen", Location: "."},
+		).Class(WindowDivCss),
+	).ID("settings-container").Class(CenteringDivCss)
+}
+
+type PhoneUsedDefaultCheckbox struct {
+	app.Compo
+	Check app.UI
+}
+
+func (c *PhoneUsedDefaultCheckbox) Render() app.UI {
+	c.Check = app.Input().
+		Type("checkbox").
+		ID("phone-used-default").
+		Class("m-2").
+		OnClick(c.OnClick)
+	return c.Check
+}
+func (c *PhoneUsedDefaultCheckbox) OnClick(ctx app.Context, e app.Event) {
+	var set string
+	log.Println("Getting phoneUsedDefault...")
+	ctx.GetState("phoneUsedDefault", &set)
+	if set == "true" {
+		log.Println("Setting phoneUsedDefault to false")
+		ctx.SetState("phoneUsedDefault", "false").Persist()
+	} else {
+		log.Println("Setting phoneUsedDefault to true")
+		ctx.SetState("phoneUsedDefault", "true").Persist()
+	}
+}
+func (c *PhoneUsedDefaultCheckbox) OnMount(ctx app.Context) {
+	var set string
+	log.Println("Getting phoneUsedDefault in OnLoad...")
+	ctx.GetState("phoneUsedDefault", &set)
+	if set == "true" {
+		app.Window().GetElementByID("phone-used-default").Set("checked", true)
+	}
 }
