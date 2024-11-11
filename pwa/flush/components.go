@@ -20,6 +20,7 @@ const (
 	InviCss          = "fixed invisible"
 	RootContainerCss = "shadow-lg bg-white rounded-lg p-6 min-h-72 relative"
 	LoadingCss       = "flex flex-row justify-center items-center"
+	RemoveButtonCss  = "font-bold bg-red-500 p-2 rounded text-white hover:bg-red-700 m-1"
 )
 
 type ErrorContainer struct {
@@ -499,9 +500,10 @@ func FlushTable(flushes []Flush) app.UI {
 			app.Div().Body(
 				timeDiv(flush),
 				app.P().Text("Rating: "+strconv.Itoa(flush.Rating)),
+				&RemoveFlushButton{ID: flush.ID},
 				app.P().Text("Phone used: "+phoneUsed),
 				app.P().Text("Note: '"+flush.Note+"'"),
-			).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg"),
+			).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg").ID("div-"+flush.ID),
 		)
 	}
 	statsDiv := app.Div().Body(
@@ -536,6 +538,29 @@ func timeDiv(flush Flush) app.UI {
 				"2006-01-02 15:04")+" - "+flush.TimeEnd.Format("2006-01-02 15:04")).Class("inline"),
 		)
 	}
+}
+
+type RemoveFlushButton struct {
+	app.Compo
+	ID string
+}
+
+func (b *RemoveFlushButton) Render() app.UI {
+	return app.Button().Body(
+		app.P().Text("🗑️"),
+	).Class(RemoveButtonCss + " max-w-10").ID(b.ID).OnClick(b.onClick)
+}
+func (b *RemoveFlushButton) onClick(ctx app.Context, e app.Event) {
+	ShowLoading("flushes-loading")
+	defer Hide("flushes-loading")
+	var creds Creds
+	ctx.GetState("creds", &creds)
+	err := RemoveFlush(b.ID, creds.UserColonPass)
+	if err != nil {
+		ShowErrorDiv(ctx, err, 1)
+		return
+	}
+	Hide("div-" + b.ID)
 }
 
 type LoadingWidget struct {
@@ -747,7 +772,7 @@ type RemoveAccountButton struct {
 func (c *RemoveAccountButton) Render() app.UI {
 	return app.Button().
 		Text("Remove account").
-		Class("font-bold bg-red-500 p-2 rounded text-white hover:bg-red-700 m-1").
+		Class(RemoveButtonCss).
 		OnClick(c.OnClick).ID("remove-account-button")
 }
 func (c *RemoveAccountButton) OnClick(ctx app.Context, e app.Event) {
