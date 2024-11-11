@@ -562,6 +562,9 @@ func (s *SettingsContainer) Render() app.UI {
 	return app.Div().Body(
 		app.Div().Body(
 			app.H1().Text("App Settings").Class("text-2xl m-2"),
+			app.P().
+				Text("You can export your flushes into formats that can be read by other apps").
+				Class("m-1"),
 			&ExportButton{ExportFormat: "JSON"},
 			app.Br(),
 			&ExportButton{ExportFormat: "CSV"},
@@ -572,7 +575,8 @@ func (s *SettingsContainer) Render() app.UI {
 				Text("Check 'phone used' option by default").
 				For("phone-used-default").Class("m-2"),
 			&PhoneUsedDefaultCheckbox{},
-		).Class(WindowDivCss),
+		).
+			Class(WindowDivCss),
 		app.Br(),
 		&LinkButton{Text: "Back to Home Screen", Location: "."},
 	).ID("settings-container").Class(CenteringDivCss + " flex-col")
