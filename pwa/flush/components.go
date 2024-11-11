@@ -99,7 +99,7 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 			ShowErrorDiv(ctx, err, 1)
 		} else {
 			app.Window().GetElementByID("hidden-hello").Set("innerHTML", "hello!")
-			b.FlushList = FLushTable(flushes)
+			b.FlushList = FlushTable(flushes)
 		}
 	}
 }
@@ -156,7 +156,7 @@ func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 				ShowErrorDiv(ctx, err, 1)
 			} else {
 				app.Window().GetElementByID("hidden-hello").Set("innerHTML", "hello!")
-				b.RootContainer.FlushList = FLushTable(flushes)
+				b.RootContainer.FlushList = FlushTable(flushes)
 			}
 		}
 	})
@@ -473,7 +473,7 @@ func (a *AboutContainer) Render() app.UI {
 	).Class(CenteringDivCss).ID("about-container")
 }
 
-func FLushTable(flushes []Flush) app.UI {
+func FlushTable(flushes []Flush) app.UI {
 	if len(flushes) == 0 {
 		return app.Div().Body(app.P().Text("No flushes yet."))
 	}
