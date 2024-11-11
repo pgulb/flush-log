@@ -64,9 +64,12 @@ def test_getting_flushes():
     assert response.status_code == status.HTTP_200_OK
     rev = flushes
     rev.reverse()
+    js = response.json()
+    for i, f in enumerate(rev):
+        f["_id"] = js[i]["_id"]
     print(rev)
-    print(response.json())
-    assert response.json() == rev
+    print(js)
+    assert js == rev
 
 
 def test_getting_flushes_noflushes():
