@@ -121,3 +121,17 @@ func RegisterAndGoToSettings(user string, pass string,
 	log.Println("return from RegisterAndGoToSettings()")
 	return p, b
 }
+
+func Login(username string, password string) (*rod.Page, *rod.Browser) {
+	log.Println("using Login()")
+	p, b := LoginPage()
+	p.MustElement("#username").MustInput(username)
+	p.MustElement("#password").MustInput(password)
+	p.MustElement("#login-button").MustClick()
+	err := p.WaitStable(time.Second * 2)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("return from Login()")
+	return p, b
+}

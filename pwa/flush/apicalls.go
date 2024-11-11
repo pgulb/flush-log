@@ -215,11 +215,9 @@ func ChangePass(newPass string, currentCreds string) error {
 	if err != nil {
 		return err
 	}
-	log.Println("jeszcze dziala")
 	defer CloseBody(resp)
 	if resp.StatusCode >= 400 {
 		return errors.New("failed to change password")
 	}
-	log.Println("ciagle dziala")
 	return nil
 }

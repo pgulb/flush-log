@@ -201,7 +201,7 @@ type buttonLogin struct {
 
 func (b *buttonLogin) Render() app.UI {
 	return app.Button().Text("Log in").OnClick(b.onClick).Class(
-		YellowButtonCss + " hover:bg-yellow-700")
+		YellowButtonCss + " hover:bg-yellow-700").ID("login-button")
 }
 func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 	loginSeconds := 60
@@ -697,7 +697,7 @@ func (c *ChangePassButton) Render() app.UI {
 	return app.Button().
 		Text("Change").
 		Class(YellowButtonCss + " hover:bg-yellow-700 m-1").
-		OnClick(c.OnClick)
+		OnClick(c.OnClick).ID("chp-button")
 }
 func (c *ChangePassButton) OnClick(ctx app.Context, e app.Event) {
 	ShowLoading("settings-loading")
