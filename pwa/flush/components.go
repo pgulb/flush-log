@@ -748,7 +748,7 @@ func (c *RemoveAccountButton) Render() app.UI {
 	return app.Button().
 		Text("Remove account").
 		Class("font-bold bg-red-500 p-2 rounded text-white hover:bg-red-700 m-1").
-		OnClick(c.OnClick)
+		OnClick(c.OnClick).ID("remove-account-button")
 }
 func (c *RemoveAccountButton) OnClick(ctx app.Context, e app.Event) {
 	var creds Creds

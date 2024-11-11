@@ -52,3 +52,30 @@ func TestChangePassword(t *testing.T) {
 		t.Fatal("user did not login successfully")
 	}
 }
+
+func TestAccountRemoval(t *testing.T) {
+	p, b := RegisterAndGoToSettings(
+		"user_settings_test3",
+		"pass_settings_test3",
+		"pass_settings_test3",
+	)
+	defer b.MustClose()
+	defer p.MustClose()
+	p.MustElement("#remove-account-button").MustClick()
+	err := p.WaitStable(time.Second * 2)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := CheckErrorDivText(p, "Type 'byebye' before deleting account"); err != nil {
+		t.Fatal(err)
+	}
+	p.MustElement("#remove-account-byebye").MustInput("byebye")
+	p.MustElement("#remove-account-button").MustClick()
+	err = p.WaitStable(time.Second * 2)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := CheckErrorDivText(p, "placeholder"); err != nil {
+		t.Fatal(err)
+	}
+}
