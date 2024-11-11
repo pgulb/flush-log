@@ -1,3 +1,6 @@
+from html.parser import HTMLParser
+from io import StringIO
+
 import mongomock
 import pymongo
 from passlib.hash import bcrypt
@@ -5,6 +8,27 @@ from passlib.hash import bcrypt
 
 def hash_password(password: str) -> str:
     return bcrypt.hash(password)
+
+
+class MLStripper(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.reset()
+        self.strict = False
+        self.convert_charrefs = True
+        self.text = StringIO()
+
+    def handle_data(self, d):
+        self.text.write(d)
+
+    def get_data(self):
+        return self.text.getvalue()
+
+
+def sanitize(note: str) -> str:
+    s = MLStripper()
+    s.feed(note)
+    return s.get_data()
 
 
 def verify_pass_hash(password: str, pass_hash: str) -> bool:
