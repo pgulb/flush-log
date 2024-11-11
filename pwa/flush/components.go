@@ -354,6 +354,11 @@ func (c *NewFlushContainer) OnMount(ctx app.Context) {
 		app.Window().Set("location", "login")
 		return
 	}
+	var set string
+	ctx.GetState("phoneUsedDefault", &set)
+	if set == "true" {
+		app.Window().GetElementByID("new-flush-phone-used").Set("checked", true)
+	}
 }
 
 type LinkButton struct {
@@ -548,10 +553,16 @@ func (s *SettingsContainer) Render() app.UI {
 		app.Div().Body(
 			app.H1().Text("App Settings").Class("text-2xl"),
 			app.Br(),
+			app.Hr(),
+			app.P().Text("Below settings are stored in your browser only").Class("font-bold"),
+			app.Label().
+				Text("Check 'phone used' option by default").
+				For("phone-used-default"),
 			&PhoneUsedDefaultCheckbox{},
 			app.Br(),
 			&LinkButton{Text: "Back to Home Screen", Location: "."},
-		).Class(WindowDivCss),
+		).
+			Class(WindowDivCss),
 	).ID("settings-container").Class(CenteringDivCss)
 }
 
