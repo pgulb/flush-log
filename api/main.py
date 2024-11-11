@@ -8,7 +8,13 @@ from typing import Union
 import dateutil
 import fastapi
 import pymongo
-from db import create_mock_client, create_mongo_client, hash_password, verify_pass_hash
+from db import (
+    create_mock_client,
+    create_mongo_client,
+    hash_password,
+    sanitize,
+    verify_pass_hash,
+)
 from fastapi import Depends, HTTPException, Query, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasicCredentials
@@ -146,7 +152,7 @@ def create_update_flush(
                     "time_end": dateutil.parser.isoparse(flush.time_end),
                     "user_id": credentials.username,
                     "rating": flush.rating,
-                    "note": flush.note,
+                    "note": sanitize(flush.note),
                     "phone_used": flush.phone_used,
                 }
             },
