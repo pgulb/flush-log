@@ -562,6 +562,9 @@ func (s *SettingsContainer) Render() app.UI {
 	return app.Div().Body(
 		app.Div().Body(
 			app.H1().Text("App Settings").Class("text-2xl m-2"),
+			&PassChangeContainer{},
+			app.Hr(),
+			app.Br(),
 			app.P().
 				Text("You can export your flushes into formats that can be read by other apps").
 				Class("m-1"),
@@ -579,6 +582,8 @@ func (s *SettingsContainer) Render() app.UI {
 			Class(WindowDivCss),
 		app.Br(),
 		&LinkButton{Text: "Back to Home Screen", Location: "."},
+		app.Div().Body(&ErrorContainer{}),
+		&LoadingWidget{id: "settings-loading"},
 	).ID("settings-container").Class(CenteringDivCss + " flex-col")
 }
 func (s *SettingsContainer) OnMount(ctx app.Context) {
@@ -658,4 +663,59 @@ func (b *ExportButton) OnClick(ctx app.Context, e app.Event) {
 	)
 	app.Window().
 		Call("open", completeUrl)
+}
+
+type PassChangeContainer struct {
+	app.Compo
+}
+
+func (p *PassChangeContainer) Render() app.UI {
+	return app.Div().Body(
+		app.P().
+			Text("Change password").
+			Class("m-1"),
+		app.P().
+			Text("You will be prompted to log in again after changing").
+			Class("m-1"),
+		app.Input().Type("password").ID(
+			"chp-password").Placeholder("New password").Class(
+			"m-1",
+		),
+		app.Input().Type("password").ID(
+			"chp-password-repeat").Placeholder("Repeat password").Class(
+			"m-1",
+		),
+		&ChangePassButton{},
+	).ID("passchange-container").Class("flex flex-col")
+}
+
+type ChangePassButton struct {
+	app.Compo
+}
+
+func (c *ChangePassButton) Render() app.UI {
+	return app.Button().
+		Text("Change").
+		Class(YellowButtonCss + " hover:bg-yellow-700 m-1").
+		OnClick(c.OnClick)
+}
+func (c *ChangePassButton) OnClick(ctx app.Context, e app.Event) {
+	ShowLoading("settings-loading")
+	newPass := app.Window().GetElementByID("chp-password").Get("value").String()
+	repeatPass := app.Window().GetElementByID("chp-password-repeat").Get("value").String()
+	var creds Creds
+	ctx.GetState("creds", &creds)
+	if err := ValidateChangePass(newPass, repeatPass); err != nil {
+		Hide("settings-loading")
+		ShowErrorDiv(ctx, err, 1)
+		return
+	}
+	if err := ChangePass(newPass, creds.UserColonPass); err != nil {
+		Hide("settings-loading")
+		ShowErrorDiv(ctx, err, 1)
+		return
+	}
+	ctx.SetState("creds", Creds{LoggedIn: false}).PersistWithEncryption()
+	Hide("settings-loading")
+	app.Window().Set("location", "login")
 }
