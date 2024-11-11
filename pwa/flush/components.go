@@ -141,7 +141,7 @@ type buttonUpdate struct {
 
 func (b *buttonUpdate) Render() app.UI {
 	return app.Button().Text("Update").OnClick(b.onClick).Class(
-		"bg-yellow-500 hover:bg-yellow-700 text-black font-bold py-2 px-4 rounded absolute bottom-4 left-4")
+		InviCss)
 }
 func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 	var creds Creds
