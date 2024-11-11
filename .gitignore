@@ -5,9 +5,20 @@ venv/
 
 # go
 tmp/
-web/
 flush-log
 flush-log.exe
+*.exe
+apiurl
 
 # drawio
 .$*
+
+# web static artifacts
+wasm_exec.js
+app-worker.js
+app.js
+app.css
+*.html
+*.webmanifest
+app.wasm
+style.css

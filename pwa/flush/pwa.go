@@ -21,8 +21,8 @@ func Run() {
 			Name:        "Flush-Log",
 			Description: "bowel tracking app",
 			Resources:   app.GitHubPages("flush-log"),
-			Scripts: []string{
-				"https://cdn.tailwindcss.com",
+			Styles: []string{
+				"/web/style.css",
 			},
 		})
 		if err != nil {
