@@ -543,24 +543,36 @@ func timeDiv(flush Flush) app.UI {
 type RemoveFlushButton struct {
 	app.Compo
 	ID string
+	T  string
 }
 
 func (b *RemoveFlushButton) Render() app.UI {
-	return app.Button().Body(
-		app.P().Text("🗑️"),
-	).Class(RemoveButtonCss + " max-w-10").ID(b.ID).OnClick(b.onClick)
+	return app.Button().Text(b.T).Class(RemoveButtonCss + " max-w-10").ID(b.ID).OnClick(b.onClick)
+}
+func (b *RemoveFlushButton) OnMount(ctx app.Context) {
+	b.T = "🗑️"
 }
 func (b *RemoveFlushButton) onClick(ctx app.Context, e app.Event) {
-	ShowLoading("flushes-loading")
-	defer Hide("flushes-loading")
-	var creds Creds
-	ctx.GetState("creds", &creds)
-	err := RemoveFlush(b.ID, creds.UserColonPass)
-	if err != nil {
-		ShowErrorDiv(ctx, err, 1)
+	log.Println("Flush remove button pressed...")
+	if b.T == "🗑️" {
+		app.Window().GetElementByID(b.ID).Set("className", RemoveButtonCss+" max-w-14")
+		b.T = "DEL?🗑️"
 		return
+	} else if b.T == "DEL?🗑️" {
+		log.Println("removing flush " + b.ID + "...")
+		ShowLoading("flushes-loading")
+		defer Hide("flushes-loading")
+		var creds Creds
+		ctx.GetState("creds", &creds)
+		err := RemoveFlush(b.ID, creds.UserColonPass)
+		if err != nil {
+			ShowErrorDiv(ctx, err, 1)
+			return
+		}
+		Hide("div-" + b.ID)
+	} else {
+		ShowErrorDiv(ctx, errors.New("Unknown error while flush deleting"), 1)
 	}
-	Hide("div-" + b.ID)
 }
 
 type LoadingWidget struct {
