@@ -13,6 +13,7 @@ type LastTriedCreds struct {
 }
 
 type Flush struct {
+	ID        string    `json:"_id"`
 	TimeStart time.Time `json:"time_start"`
 	TimeEnd   time.Time `json:"time_end"`
 	Rating    int       `json:"rating"`

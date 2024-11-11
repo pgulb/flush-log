@@ -8,6 +8,7 @@ from typing import Union
 import dateutil
 import fastapi
 import pymongo
+from bson.objectid import ObjectId
 from db import (
     create_mock_client,
     create_mongo_client,
@@ -62,6 +63,13 @@ def filter_from_flush(credentials: HTTPBasicCredentials, flush: Flush) -> dict:
     return {
         "time_start": dateutil.parser.isoparse(flush.time_start),
         "time_end": dateutil.parser.isoparse(flush.time_end),
+        "user_id": credentials.username,
+    }
+
+
+def filter_from_creds_and_id(credentials: HTTPBasicCredentials, flush_id: str) -> dict:
+    return {
+        "_id": ObjectId(flush_id),
         "user_id": credentials.username,
     }
 
@@ -184,6 +192,25 @@ def delete_flush(
     return flush.time_start
 
 
+@app.delete("/flush/{flush_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_flush_by_id(
+    flush_id: str, credentials: HTTPBasicCredentials = Depends(security)
+):
+    check_creds(credentials)
+    flushes = client.flush.flushes
+    try:
+        result = flushes.delete_one(
+            filter=filter_from_creds_and_id(credentials, flush_id)
+        )
+        if result.deleted_count != 1:
+            raise Exception("Flush not deleted")
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Error deleting flush"
+        ) from e
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @app.get("/flushes", status_code=status.HTTP_200_OK)
 def get_flushes(
     export_format: Union[str, None] = None,
@@ -200,7 +227,7 @@ def get_flushes(
             )
         ]
         for entry in entries:
-            del entry["_id"]
+            entry["_id"] = str(entry["_id"])
             del entry["user_id"]
         if export_format == "json":
             for e in entries:

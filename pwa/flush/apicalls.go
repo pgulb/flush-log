@@ -172,6 +172,7 @@ func GetFlushes(ctx app.Context) ([]Flush, error) {
 		Rating    int    `json:"rating"`
 		PhoneUsed bool   `json:"phone_used"`
 		Note      string `json:"note"`
+		ID        string `json:"_id"`
 	}{}
 	err = json.Unmarshal(bytes, &temp)
 	if err != nil {
@@ -190,6 +191,7 @@ func GetFlushes(ctx app.Context) ([]Flush, error) {
 		flushes[i].Rating = temp[i].Rating
 		flushes[i].PhoneUsed = temp[i].PhoneUsed
 		flushes[i].Note = temp[i].Note
+		flushes[i].ID = temp[i].ID
 	}
 	log.Println("temporary flush struct: ", temp)
 	log.Println("Flushes: ", flushes)
@@ -239,6 +241,27 @@ func RemoveAccount(currentCreds string) error {
 	defer CloseBody(resp)
 	if resp.StatusCode >= 400 {
 		return errors.New("failed to remove user account")
+	}
+	return nil
+}
+
+func RemoveFlush(ID string, currentCreds string) error {
+	apiUrl, err := GetApiUrl()
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("DELETE", apiUrl+"/flush/"+ID, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Authorization", "Basic "+currentCreds)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer CloseBody(resp)
+	if resp.StatusCode >= 400 {
+		return errors.New("failed to remove flush")
 	}
 	return nil
 }

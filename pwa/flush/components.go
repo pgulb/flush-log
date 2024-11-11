@@ -20,6 +20,7 @@ const (
 	InviCss          = "fixed invisible"
 	RootContainerCss = "shadow-lg bg-white rounded-lg p-6 min-h-72 relative"
 	LoadingCss       = "flex flex-row justify-center items-center"
+	RemoveButtonCss  = "font-bold bg-red-500 p-2 rounded text-white hover:bg-red-700 m-1"
 )
 
 type ErrorContainer struct {
@@ -99,7 +100,7 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 			ShowErrorDiv(ctx, err, 1)
 		} else {
 			app.Window().GetElementByID("hidden-hello").Set("innerHTML", "hello!")
-			b.FlushList = FLushTable(flushes)
+			b.FlushList = FlushTable(flushes)
 		}
 	}
 }
@@ -156,7 +157,7 @@ func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 				ShowErrorDiv(ctx, err, 1)
 			} else {
 				app.Window().GetElementByID("hidden-hello").Set("innerHTML", "hello!")
-				b.RootContainer.FlushList = FLushTable(flushes)
+				b.RootContainer.FlushList = FlushTable(flushes)
 			}
 		}
 	})
@@ -473,7 +474,7 @@ func (a *AboutContainer) Render() app.UI {
 	).Class(CenteringDivCss).ID("about-container")
 }
 
-func FLushTable(flushes []Flush) app.UI {
+func FlushTable(flushes []Flush) app.UI {
 	if len(flushes) == 0 {
 		return app.Div().Body(app.P().Text("No flushes yet."))
 	}
@@ -499,9 +500,10 @@ func FLushTable(flushes []Flush) app.UI {
 			app.Div().Body(
 				timeDiv(flush),
 				app.P().Text("Rating: "+strconv.Itoa(flush.Rating)),
+				&RemoveFlushButton{ID: flush.ID},
 				app.P().Text("Phone used: "+phoneUsed),
 				app.P().Text("Note: '"+flush.Note+"'"),
-			).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg"),
+			).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg").ID("div-"+flush.ID),
 		)
 	}
 	statsDiv := app.Div().Body(
@@ -535,6 +537,41 @@ func timeDiv(flush Flush) app.UI {
 			app.P().Text(flushDuration+" minutes, "+flush.TimeStart.Format(
 				"2006-01-02 15:04")+" - "+flush.TimeEnd.Format("2006-01-02 15:04")).Class("inline"),
 		)
+	}
+}
+
+type RemoveFlushButton struct {
+	app.Compo
+	ID string
+	T  string
+}
+
+func (b *RemoveFlushButton) Render() app.UI {
+	return app.Button().Text(b.T).Class(RemoveButtonCss + " max-w-10").ID(b.ID).OnClick(b.onClick)
+}
+func (b *RemoveFlushButton) OnMount(ctx app.Context) {
+	b.T = "🗑️"
+}
+func (b *RemoveFlushButton) onClick(ctx app.Context, e app.Event) {
+	log.Println("Flush remove button pressed...")
+	if b.T == "🗑️" {
+		app.Window().GetElementByID(b.ID).Set("className", RemoveButtonCss+" max-w-14")
+		b.T = "DEL?🗑️"
+		return
+	} else if b.T == "DEL?🗑️" {
+		log.Println("removing flush " + b.ID + "...")
+		ShowLoading("flushes-loading")
+		defer Hide("flushes-loading")
+		var creds Creds
+		ctx.GetState("creds", &creds)
+		err := RemoveFlush(b.ID, creds.UserColonPass)
+		if err != nil {
+			ShowErrorDiv(ctx, err, 1)
+			return
+		}
+		Hide("div-" + b.ID)
+	} else {
+		ShowErrorDiv(ctx, errors.New("Unknown error while flush deleting"), 1)
 	}
 }
 
@@ -747,7 +784,7 @@ type RemoveAccountButton struct {
 func (c *RemoveAccountButton) Render() app.UI {
 	return app.Button().
 		Text("Remove account").
-		Class("font-bold bg-red-500 p-2 rounded text-white hover:bg-red-700 m-1").
+		Class(RemoveButtonCss).
 		OnClick(c.OnClick).ID("remove-account-button")
 }
 func (c *RemoveAccountButton) OnClick(ctx app.Context, e app.Event) {
