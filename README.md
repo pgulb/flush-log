@@ -73,6 +73,7 @@ with local mongo
 ```sh
 task test-api-integration
 ```
+---
 ### PWA tests
 unit  
 ```sh
