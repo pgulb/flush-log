@@ -284,3 +284,70 @@ def update_password(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Error changing password"
         ) from e
+
+
+@app.get("/stats", status_code=status.HTTP_200_OK)
+def get_flush_stats(credentials: HTTPBasicCredentials = Depends(security)):
+    check_creds(credentials)
+    flushes = client.flush.flushes
+    try:
+        result = flushes.aggregate(
+            [
+                {"$match": {"user_id": credentials.username}},
+                {
+                    "$group": {
+                        "_id": "$user_id",
+                        "flushCount": {"$sum": 1},
+                        "totalTime": {
+                            "$sum": {
+                                "$dateDiff": {
+                                    "startDate": "$time_start",
+                                    "endDate": "$time_end",
+                                    "unit": "minute",
+                                }
+                            }
+                        },
+                        "meanTime": {
+                            "$avg": {
+                                "$dateDiff": {
+                                    "startDate": "$time_start",
+                                    "endDate": "$time_end",
+                                    "unit": "minute",
+                                }
+                            }
+                        },
+                        "meanRating": {"$avg": "$rating"},
+                        "phoneUsedCount": {"$sum": {"$cond": ["$phone_used", 1, 0]}},
+                    }
+                },
+                {
+                    "$addFields": {
+                        "percentPhoneUsed": {
+                            "$multiply": [
+                                {"$divide": ["$phoneUsedCount", "$flushCount"]},
+                                100,
+                            ]
+                        }
+                    }
+                },
+            ]
+        )
+        json_stats = result.to_list()
+        if json_stats == []:
+            return {
+                "flushCount": 0,
+                "totalTime": 0,
+                "meanTime": 0,
+                "meanRating": 0,
+                "phoneUsedCount": 0,
+                "percentPhoneUsed": 0,
+            }
+        json_stats = json_stats[0]
+        json_stats["meanRating"] = int(json_stats["meanRating"])
+        json_stats["percentPhoneUsed"] = int(json_stats["percentPhoneUsed"])
+        del json_stats["_id"]
+        return json_stats
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Error getting stats"
+        ) from e
