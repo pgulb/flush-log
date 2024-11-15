@@ -100,7 +100,7 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 			ShowErrorDiv(ctx, err, 1)
 		} else {
 			app.Window().GetElementByID("hidden-hello").Set("innerHTML", "hello!")
-			b.FlushList = FlushTable(flushes)
+			b.FlushList = FlushTable(flushes, ctx)
 		}
 	}
 }
@@ -157,7 +157,7 @@ func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 				ShowErrorDiv(ctx, err, 1)
 			} else {
 				app.Window().GetElementByID("hidden-hello").Set("innerHTML", "hello!")
-				b.RootContainer.FlushList = FlushTable(flushes)
+				b.RootContainer.FlushList = FlushTable(flushes, ctx)
 			}
 		}
 	})
@@ -474,22 +474,12 @@ func (a *AboutContainer) Render() app.UI {
 	).Class(CenteringDivCss).ID("about-container")
 }
 
-func FlushTable(flushes []Flush) app.UI {
+func FlushTable(flushes []Flush, ctx app.Context) app.UI {
 	if len(flushes) == 0 {
 		return app.Div().Body(app.P().Text("No flushes yet."))
 	}
 	divs := []app.UI{}
-	var totalTime time.Duration
-	var count int
-	var meanRating int
-	var timesWithPhone int
 	for _, flush := range flushes {
-		totalTime += flush.TimeEnd.Sub(flush.TimeStart)
-		count++
-		if flush.PhoneUsed {
-			timesWithPhone++
-		}
-		meanRating += flush.Rating
 		var phoneUsed string
 		if flush.PhoneUsed {
 			phoneUsed = "Yes"
@@ -508,13 +498,18 @@ func FlushTable(flushes []Flush) app.UI {
 			).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg").ID("div-"+flush.ID),
 		)
 	}
+	stats, err := GetStats(ctx)
+	if err != nil {
+		ShowErrorDiv(ctx, err, 3)
+		return app.Div()
+	}
 	statsDiv := app.Div().Body(
-		app.P().Text("Total flushes: "+strconv.Itoa(count)),
-		app.P().Text("Total time: "+strconv.Itoa(int(totalTime.Minutes()))+" minutes"),
-		app.P().Text("Mean time: "+strconv.Itoa(int(totalTime.Minutes())/count)+" minutes"),
-		app.P().Text("Mean rating: "+strconv.Itoa(meanRating/count)),
-		app.P().Text("Times with phone used: "+strconv.Itoa(timesWithPhone)),
-		app.P().Text("Percent with phone used: "+strconv.Itoa(timesWithPhone*100/count)+"%"),
+		app.P().Text("Total flushes: "+strconv.Itoa(stats.FlushCount)),
+		app.P().Text("Total time: "+strconv.Itoa(stats.TotalTime)+" minutes"),
+		app.P().Text("Mean time: "+strconv.Itoa(stats.MeanTime)+" minutes"),
+		app.P().Text("Mean rating: "+strconv.Itoa(stats.MeanRating)),
+		app.P().Text("Times with phone used: "+strconv.Itoa(stats.PhoneUsedCount)),
+		app.P().Text("Percent with phone used: "+strconv.Itoa(stats.PercentPhoneUsed)+"%"),
 	).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg font-bold")
 	divs = append([]app.UI{statsDiv}, divs...)
 	return app.Div().Body(divs...)
