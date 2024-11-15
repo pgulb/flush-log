@@ -504,7 +504,7 @@ func FlushTable(flushes []Flush) app.UI {
 					&RemoveFlushButton{ID: flush.ID},
 				).Class("max-w-1/6"),
 				app.P().Text("Phone used: "+phoneUsed),
-				app.P().Text("Note: '"+flush.Note+"'"),
+				app.P().Text("Note: '"+flush.Note+"'").Class("break-all"),
 			).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg").ID("div-"+flush.ID),
 		)
 	}
