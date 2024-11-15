@@ -265,3 +265,44 @@ func RemoveFlush(ID string, currentCreds string) error {
 	}
 	return nil
 }
+
+func GetStats(ctx app.Context) (FlushStatsInt, error) {
+	apiUrl, err := GetApiUrl()
+	if err != nil {
+		return FlushStatsInt{}, err
+	}
+	req, err := http.NewRequest("GET", apiUrl+"/stats", nil)
+	if err != nil {
+		return FlushStatsInt{}, err
+	}
+	var c Creds
+	ctx.GetState("creds", &c)
+	req.Header.Add("Authorization", "Basic "+c.UserColonPass)
+	r, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return FlushStatsInt{}, err
+	}
+	defer CloseBody(r)
+	if r.StatusCode >= 400 {
+		ctx.SetState("creds", Creds{LoggedIn: false}).PersistWithEncryption()
+		app.Window().Set("location", "login")
+	}
+	bytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		return FlushStatsInt{}, err
+	}
+	log.Println("raw Stats: ", string(bytes))
+	var stats FlushStats
+	err = json.Unmarshal(bytes, &stats)
+	if err != nil {
+		return FlushStatsInt{}, err
+	}
+	statsInt := FlushStatsInt{}
+	statsInt.FlushCount = int(stats.FlushCount)
+	statsInt.TotalTime = int(stats.TotalTime)
+	statsInt.MeanTime = int(stats.MeanTime)
+	statsInt.MeanRating = int(stats.MeanRating)
+	statsInt.PhoneUsedCount = int(stats.PhoneUsedCount)
+	statsInt.PercentPhoneUsed = int(stats.PercentPhoneUsed)
+	return statsInt, nil
+}
