@@ -20,3 +20,21 @@ type Flush struct {
 	PhoneUsed bool      `json:"phone_used"`
 	Note      string    `json:"note"`
 }
+
+type FlushStats struct {
+	FlushCount       float64 `json:"flushCount"`
+	TotalTime        float64 `json:"totalTime"`
+	MeanTime         float64 `json:"meanTime"`
+	MeanRating       float64 `json:"meanRating"`
+	PhoneUsedCount   float64 `json:"phoneUsedCount"`
+	PercentPhoneUsed float64 `json:"percentPhoneUsed"`
+}
+
+type FlushStatsInt struct {
+	FlushCount       int
+	TotalTime        int
+	MeanTime         int
+	MeanRating       int
+	PhoneUsedCount   int
+	PercentPhoneUsed int
+}
