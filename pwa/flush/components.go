@@ -94,14 +94,18 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 		app.Window().GetElementByID("root-container").Set("className", RootContainerCss)
 		app.Window().GetElementByID("about-container").Set("className", "invisible fixed")
 		ShowLoading("flushes-loading")
-		defer Hide("flushes-loading")
-		flushes, err := GetFlushes(ctx)
-		if err != nil {
-			ShowErrorDiv(ctx, err, 1)
-		} else {
-			app.Window().GetElementByID("hidden-hello").Set("innerHTML", "hello!")
-			b.FlushList = FlushTable(flushes, ctx)
-		}
+		ctx.Async(func() {
+			result := GetFlushesFromOID(ctx)
+			ctx.Dispatch(func(ctx app.Context) {
+				if result == nil {
+					ShowErrorDiv(ctx, errors.New("Error while fetching flushes"), 2)
+					return
+				}
+				app.Window().GetElementByID("hidden-hello").Set("innerHTML", "hello!")
+				b.FlushList = *result
+				Hide("flushes-loading")
+			})
+		})
 	}
 }
 func (b *RootContainer) Render() app.UI {
@@ -807,15 +811,10 @@ func (c *RemoveAccountButton) OnClick(ctx app.Context, e app.Event) {
 }
 
 func GetFlushesFromOID(ctx app.Context) *app.UI {
-	c := make(chan *app.UI)
-	ctx.Async(func() {
-		fls, err := GetFlushes(ctx)
-		if err != nil {
-			ShowErrorDiv(ctx, err, 2)
-		}
-		elem := FlushTable(fls, ctx)
-		c <- &elem
-	})
-	result := <-c
-	return result
+	fls, err := GetFlushes(ctx)
+	if err != nil {
+		return nil
+	}
+	result := FlushTable(fls, ctx)
+	return &result
 }
