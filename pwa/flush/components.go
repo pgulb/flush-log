@@ -805,3 +805,17 @@ func (c *RemoveAccountButton) OnClick(ctx app.Context, e app.Event) {
 	ctx.SetState("creds", Creds{LoggedIn: false}).PersistWithEncryption()
 	app.Window().Set("location", ".")
 }
+
+func GetFlushesFromOID(ctx app.Context) *app.UI {
+	c := make(chan *app.UI)
+	ctx.Async(func() {
+		fls, err := GetFlushes(ctx)
+		if err != nil {
+			ShowErrorDiv(ctx, err, 2)
+		}
+		elem := FlushTable(fls, ctx)
+		c <- &elem
+	})
+	result := <-c
+	return result
+}
