@@ -13,14 +13,15 @@ import (
 )
 
 const (
-	YellowButtonCss  = "font-bold bg-yellow-500 p-2 rounded text-white mx-1"
-	ErrorDivCss      = "flex flex-row fixed bottom-4 left-4 bg-red-500 text-white p-4 text-xl rounded-lg"
+	YellowButtonCss  = "font-bold bg-amber-600 p-2 rounded mx-1"
+	ErrorDivCss      = "flex flex-row fixed bottom-4 left-4 bg-red-500 p-4 text-xl rounded-lg"
 	CenteringDivCss  = "flex flex-row min-h-screen justify-center items-center"
-	WindowDivCss     = "p-4 text-center text-xl shadow-lg bg-white rounded-lg mx-10"
+	WindowDivCss     = "p-4 text-center text-xl shadow-lg bg-zinc-800 rounded-lg mx-10"
 	InviCss          = "fixed invisible"
-	RootContainerCss = "shadow-lg bg-white rounded-lg p-6 min-h-72 relative"
+	RootContainerCss = "shadow-lg bg-zinc-800 rounded-lg p-6 min-h-72 relative"
 	LoadingCss       = "flex flex-row justify-center items-center"
-	RemoveButtonCss  = "font-bold bg-red-500 p-2 rounded text-white hover:bg-red-700 m-1"
+	RemoveButtonCss  = "font-bold bg-red-500 p-2 rounded hover:bg-red-700 m-1"
+	LogoutButtonCss  = "font-bold bg-amber-700 p-2 rounded mx-1 hover:bg-amber-900"
 )
 
 type ErrorContainer struct {
@@ -30,7 +31,7 @@ type ErrorContainer struct {
 func (e *ErrorContainer) Render() app.UI {
 	return app.Div().Body(app.Div().Body(
 		app.P().Text("placeholder error")).Class(
-		"p-8 text-center text-xl shadow-lg bg-white rounded-lg",
+		"p-8 text-center text-xl shadow-lg bg-zinc-800 rounded-lg",
 	)).Class(
 		InviCss,
 	).ID("error")
@@ -42,7 +43,7 @@ type buttonShowRegister struct {
 
 func (b *buttonShowRegister) Render() app.UI {
 	return app.Button().Text("I need account").OnClick(b.onClick).Class(
-		YellowButtonCss + " hover:bg-yellow-700").ID("show-register")
+		YellowButtonCss + " hover:bg-amber-800").ID("show-register")
 }
 func (b *buttonShowRegister) onClick(ctx app.Context, e app.Event) {
 	app.Window().GetElementByID("register-container").Set("className", WindowDivCss)
@@ -58,16 +59,16 @@ func (r *RegisterContainer) Render() app.UI {
 		app.Div().Body(
 			app.P().Text("Register").Class("font-bold"),
 			app.Input().Type("text").ID("register-username").Placeholder("Username").Class(
-				"m-2 placeholder-gray-500",
+				"m-2",
 			),
 			app.Br(),
 			app.Input().Type("password").ID("register-password").Placeholder("Password").Class(
-				"m-2 placeholder-gray-500",
+				"m-2",
 			),
 			app.Br(),
 			app.Input().Type("password").ID("register-password-repeat").Placeholder(
 				"Repeat password").Class(
-				"m-2 placeholder-gray-500 my-4",
+				"m-2 my-4",
 			),
 			app.Br(),
 			&buttonRegister{},
@@ -111,7 +112,7 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 				if isEmpty != "true" {
 					log.Println("Viewing update button")
 					app.Window().GetElementByID("update-button").
-						Set("className", YellowButtonCss+" hover:bg-yellow-700 align-middle")
+						Set("className", YellowButtonCss+" hover:bg-amber-800 align-middle")
 				} else {
 					log.Println("No flushes, hiding update button")
 					app.Window().GetElementByID("update-button").Set("className", InviCss)
@@ -130,12 +131,12 @@ func (b *RootContainer) Render() app.UI {
 				&LinkButton{
 					Text:          "Settings",
 					Location:      "settings",
-					AdditionalCss: "hover:bg-yellow-700 m-1",
+					AdditionalCss: "hover:bg-amber-800 m-1",
 				},
 				&LinkButton{
 					Text:          "(+)",
 					Location:      "new",
-					AdditionalCss: "hover:bg-yellow-700 m-1",
+					AdditionalCss: "hover:bg-amber-800",
 				},
 			).ID("root-buttons-container").Class("flex flex-col absolute top-4 right-4"),
 			app.P().Text("Tracked flushes:").Class("py-2"),
@@ -162,7 +163,7 @@ type buttonUpdate struct {
 
 func (b *buttonUpdate) Render() app.UI {
 	return app.Button().Text("Load More").OnClick(b.onClick).Class(
-		YellowButtonCss + " hover:bg-yellow-700 align-middle").ID("update-button")
+		YellowButtonCss + " hover:bg-amber-800 align-middle").ID("update-button")
 }
 func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 	ShowLoading("flushes-loading-update")
@@ -185,7 +186,7 @@ func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 					Body(app.P().Text("No more flushes to show.").Class("py-2")))
 			} else {
 				app.Window().GetElementByID("update-button").
-					Set("className", YellowButtonCss+" hover:bg-yellow-700 align-middle")
+					Set("className", YellowButtonCss+" hover:bg-amber-800 align-middle")
 			}
 		})
 	})
@@ -200,11 +201,11 @@ func (l *LoginContainer) Render() app.UI {
 		app.P().Text("Log in to continue.").Class("font-bold"),
 		app.Div().Body(
 			app.Input().Type("text").ID("username").Placeholder("Username").Class(
-				"m-2 placeholder-gray-500",
+				"m-2",
 			),
 			app.Br(),
 			app.Input().Type("password").ID("password").Placeholder("Password").Class(
-				"m-2 placeholder-gray-500",
+				"m-2",
 			),
 			app.Br(),
 			app.Div().Body(
@@ -218,7 +219,7 @@ func (l *LoginContainer) Render() app.UI {
 			),
 			&LoadingWidget{id: "login-loading"},
 		),
-	).Class("p-4 text-center text-xl shadow-lg bg-white rounded-lg").ID("login-container"),
+	).Class("p-4 text-center text-xl shadow-lg bg-zinc-800 rounded-lg").ID("login-container"),
 		&RegisterContainer{},
 		app.Div().Body(&ErrorContainer{})).Class(
 		CenteringDivCss)
@@ -230,7 +231,7 @@ type buttonLogin struct {
 
 func (b *buttonLogin) Render() app.UI {
 	return app.Button().Text("Log in").OnClick(b.onClick).Class(
-		YellowButtonCss + " hover:bg-yellow-700").ID("login-button")
+		YellowButtonCss + " hover:bg-amber-800").ID("login-button")
 }
 func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 	loginSeconds := 600
@@ -286,7 +287,7 @@ type buttonRegister struct {
 
 func (b *buttonRegister) Render() app.UI {
 	return app.Button().Text("Register").OnClick(b.onClick).Class(
-		YellowButtonCss + " hover:bg-yellow-700").ID("register-button")
+		YellowButtonCss + " hover:bg-amber-800").ID("register-button")
 }
 func (b *buttonRegister) onClick(ctx app.Context, e app.Event) {
 	log.Println("Trying to register...")
@@ -336,7 +337,7 @@ type buttonLogout struct {
 
 func (b *buttonLogout) Render() app.UI {
 	return app.Button().Text("Log out").OnClick(b.onClick).Class(
-		"font-bold border-2 border-white p-2 rounded")
+		LogoutButtonCss)
 }
 func (b *buttonLogout) onClick(ctx app.Context, e app.Event) {
 	ctx.SetState("creds", Creds{LoggedIn: false}).PersistWithEncryption()
@@ -382,10 +383,15 @@ func (c *NewFlushContainer) Render() app.UI {
 				app.Br(),
 				&SubmitFlushButton{},
 				&LoadingWidget{id: "new-flush-loading"},
-			).Class("p-4 text-center text-xl shadow-lg bg-white rounded-lg"),
+			).Class("p-4 text-center text-xl shadow-lg bg-zinc-800 rounded-lg"),
 			app.Br(),
-			&LinkButton{Text: "Back to Home Screen", Location: "."},
-		).Class("flex flex-col"),
+			&LinkButton{
+				Text:          "Back to Home Screen",
+				Location:      ".",
+				AdditionalCss: "hover:bg-amber-800",
+			},
+		).
+			Class("flex flex-col"),
 		app.Div().Body(&ErrorContainer{}),
 	).Class(CenteringDivCss)
 }
@@ -502,7 +508,7 @@ func (a *AboutContainer) Render() app.UI {
 			&LinkButton{
 				Text:          "Login/Register",
 				Location:      "login",
-				AdditionalCss: "hover:bg-yellow-700",
+				AdditionalCss: "hover:bg-amber-800",
 			},
 		).Class("flex flex-col p-4 shadow-lg rounded-lg"),
 	).Class(CenteringDivCss).ID("about-container")
@@ -648,10 +654,10 @@ func (l *LoadingWidget) Render() app.UI {
 	return app.Div().Body(
 		app.Div().Body(
 			app.Span().
-				Text("Loading...").Class("font-bold text-black").
+				Text("Loading...").Class("font-bold").
 				Class("!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]"),
 		).
-			Class("inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite] text-yellow-500"),
+			Class("inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite] text-amber-600"),
 	).Class(InviCss).ID(l.id)
 }
 
@@ -691,9 +697,14 @@ func (s *SettingsContainer) Render() app.UI {
 			).
 				Class(WindowDivCss),
 			app.Br(),
-			&LinkButton{Text: "Back to Home Screen", Location: "."},
+			&LinkButton{
+				Text:          "Back to Home Screen",
+				Location:      ".",
+				AdditionalCss: "hover:bg-amber-800",
+			},
 			&LoadingWidget{id: "settings-loading"},
-		).ID("settings-container").Class(CenteringDivCss+" flex-col"),
+		).
+			ID("settings-container").Class(CenteringDivCss+" flex-col"),
 		&ErrorContainer{},
 	)
 }
@@ -749,7 +760,7 @@ type ExportButton struct {
 func (b *ExportButton) Render() app.UI {
 	return app.Button().
 		Text(fmt.Sprintf("Export to %s", b.ExportFormat)).
-		Class(YellowButtonCss + " hover:bg-yellow-700 m-1").
+		Class(YellowButtonCss + " hover:bg-amber-800 m-1").
 		OnClick(b.OnClick)
 }
 func (b *ExportButton) OnClick(ctx app.Context, e app.Event) {
@@ -807,7 +818,7 @@ type ChangePassButton struct {
 func (c *ChangePassButton) Render() app.UI {
 	return app.Button().
 		Text("Change").
-		Class(YellowButtonCss + " hover:bg-yellow-700 m-1").
+		Class(YellowButtonCss + " hover:bg-amber-800 m-1").
 		OnClick(c.OnClick).ID("chp-button")
 }
 func (c *ChangePassButton) OnClick(ctx app.Context, e app.Event) {
