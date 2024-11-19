@@ -494,7 +494,10 @@ type AboutContainer struct {
 func (a *AboutContainer) Render() app.UI {
 	return app.Div().Body(
 		app.Div().Body(
-			app.H1().Text("About Flush Log").Class("text-2xl bold"),
+			app.Div().Body(
+				app.H1().Text("About Flush Log").Class("text-2xl bold inline"),
+				app.Img().Src("/web/paper.png").Class("inline").Width(100).Height(100),
+			),
 			app.Br(),
 			app.P().Text("Application for tracking toilet flushes."),
 			app.P().Text("You can use it to save them, rate them, check your toilet stats."),
@@ -510,7 +513,7 @@ func (a *AboutContainer) Render() app.UI {
 				Location:      "login",
 				AdditionalCss: "hover:bg-amber-800",
 			},
-		).Class("flex flex-col p-4 shadow-lg rounded-lg"),
+		).Class("flex flex-col p-4 shadow-lg rounded-lg bg-zinc-800"),
 	).Class(CenteringDivCss).ID("about-container")
 }
 
