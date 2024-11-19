@@ -214,18 +214,32 @@ def delete_flush_by_id(
 @app.get("/flushes", status_code=status.HTTP_200_OK)
 def get_flushes(
     export_format: Union[str, None] = None,
+    skip: Union[int, None] = None,
     credentials: HTTPBasicCredentials = Depends(security),
 ):
     check_creds(credentials)
     flushes = client.flush.flushes
     try:
-        entries = [
-            x
-            for x in flushes.find(
-                filter={"user_id": credentials.username},
-                sort=[("time_start", pymongo.DESCENDING)],
-            )
-        ]
+        if skip is not None:
+            entries = [
+                x
+                for x in flushes.find(
+                    filter={
+                        "user_id": credentials.username,
+                    },
+                    limit=3,
+                    skip=skip,
+                    sort=[("time_start", pymongo.DESCENDING)],
+                )
+            ]
+        else:
+            entries = [
+                x
+                for x in flushes.find(
+                    filter={"user_id": credentials.username},
+                    sort=[("time_start", pymongo.DESCENDING)],
+                )
+            ]
         for entry in entries:
             entry["_id"] = str(entry["_id"])
             del entry["user_id"]

@@ -84,24 +84,40 @@ type RootContainer struct {
 }
 
 func (b *RootContainer) OnMount(ctx app.Context) {
-	b.buttonUpdate.RootContainer = b
+	b.buttonUpdate.parent = b
 	var creds Creds
 	ctx.GetState("creds", &creds)
 	log.Println("Logged in: ", creds.LoggedIn)
 	if !creds.LoggedIn {
 		log.Println("Not logged in at root...")
 	} else {
+		Hide("update-button")
 		app.Window().GetElementByID("root-container").Set("className", RootContainerCss)
 		app.Window().GetElementByID("about-container").Set("className", "invisible fixed")
 		ShowLoading("flushes-loading")
-		defer Hide("flushes-loading")
-		flushes, err := GetFlushes(ctx)
-		if err != nil {
-			ShowErrorDiv(ctx, err, 1)
-		} else {
-			app.Window().GetElementByID("hidden-hello").Set("innerHTML", "hello!")
-			b.FlushList = FlushTable(flushes, ctx)
-		}
+		ctx.Async(func() {
+			result := GetFlushesFromOID(ctx)
+			ctx.Dispatch(func(ctx app.Context) {
+				defer Hide("flushes-loading")
+				if result == nil {
+					ShowErrorDiv(ctx, errors.New("Error while fetching flushes"), 2)
+					return
+				}
+				app.Window().GetElementByID("hidden-hello").Set("innerHTML", "hello!")
+				b.SetList(result)
+				var isEmpty string
+				ctx.GetState("no-flushes", &isEmpty)
+				log.Println("no-flushes: ", isEmpty)
+				if isEmpty != "true" {
+					log.Println("Viewing update button")
+					app.Window().GetElementByID("update-button").
+						Set("className", YellowButtonCss+" hover:bg-yellow-700 align-middle")
+				} else {
+					log.Println("No flushes, hiding update button")
+					app.Window().GetElementByID("update-button").Set("className", InviCss)
+				}
+			})
+		})
 	}
 }
 func (b *RootContainer) Render() app.UI {
@@ -126,40 +142,52 @@ func (b *RootContainer) Render() app.UI {
 			&LoadingWidget{id: "flushes-loading"},
 			b.FlushList,
 			app.Div().Body(
-				b.buttonUpdate.Render(),
+				&b.buttonUpdate,
+				&LoadingWidget{id: "flushes-loading-update"},
 			).
-				Class("m-10"),
+				Class(LoadingCss+" m-2"),
 		).Class("invisible fixed").ID("root-container"),
 		&AboutContainer{},
 		app.Div().Body(&ErrorContainer{}),
 	)
 }
+func (b *RootContainer) SetList(list app.UI) {
+	b.FlushList = list
+}
 
 type buttonUpdate struct {
 	app.Compo
-	*RootContainer
+	parent *RootContainer
 }
 
 func (b *buttonUpdate) Render() app.UI {
-	return app.Button().Text("Update").OnClick(b.onClick).Class(
-		InviCss)
+	return app.Button().Text("Load More").OnClick(b.onClick).Class(
+		YellowButtonCss + " hover:bg-yellow-700 align-middle").ID("update-button")
 }
 func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
-	var creds Creds
-	ctx.GetState("creds", &creds)
+	ShowLoading("flushes-loading-update")
+	Hide("update-button")
 	ctx.Async(func() {
-		if creds.LoggedIn {
-			log.Println("Getting new API response...")
-			ShowLoading("flushes-loading")
-			defer Hide("flushes-loading")
-			flushes, err := GetFlushes(ctx)
-			if err != nil {
-				ShowErrorDiv(ctx, err, 1)
-			} else {
-				app.Window().GetElementByID("hidden-hello").Set("innerHTML", "hello!")
-				b.RootContainer.FlushList = FlushTable(flushes, ctx)
+		result := GetFlushesFromOID(ctx)
+		ctx.Dispatch(func(ctx app.Context) {
+			defer Hide("flushes-loading-update")
+			if result == nil {
+				ShowErrorDiv(ctx, errors.New("Error while fetching flushes"), 2)
+				return
 			}
-		}
+			b.parent.SetList(result)
+			var isEmpty string
+			ctx.GetState("no-flushes", &isEmpty)
+			if isEmpty == "true" {
+				log.Println("No flushes, hiding update button")
+				app.Window().GetElementByID("update-button").Set("className", InviCss)
+				b.parent.SetList(app.Div().
+					Body(app.P().Text("No more flushes to show.").Class("py-2")))
+			} else {
+				app.Window().GetElementByID("update-button").
+					Set("className", YellowButtonCss+" hover:bg-yellow-700 align-middle")
+			}
+		})
 	})
 }
 
@@ -476,6 +504,7 @@ func (a *AboutContainer) Render() app.UI {
 
 func FlushTable(flushes []Flush, ctx app.Context) app.UI {
 	if len(flushes) == 0 {
+		ctx.SetState("no-flushes", "true")
 		return app.Div().Body(app.P().Text("No flushes yet."))
 	}
 	divs := []app.UI{}
@@ -492,7 +521,9 @@ func FlushTable(flushes []Flush, ctx app.Context) app.UI {
 				app.P().Text("Rating: "+strconv.Itoa(flush.Rating)),
 				app.Div().Body(
 					&RemoveFlushButton{ID: flush.ID},
-				).Class("max-w-1/6"),
+					&ConfirmRemoveFlushButton{ID: flush.ID},
+					&CancelRemoveFlushButton{ID: flush.ID},
+				).Class("max-w-1/6 remove-flush-buttonz-div"),
 				app.P().Text("Phone used: "+phoneUsed),
 				app.P().Text("Note: '"+flush.Note+"'").Class("break-all"),
 			).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg").ID("div-"+flush.ID),
@@ -540,36 +571,66 @@ func timeDiv(flush Flush) app.UI {
 type RemoveFlushButton struct {
 	app.Compo
 	ID string
-	T  string
 }
 
 func (b *RemoveFlushButton) Render() app.UI {
-	return app.Button().Text(b.T).Class(RemoveButtonCss).ID(b.ID).OnClick(b.onClick)
-}
-func (b *RemoveFlushButton) OnMount(ctx app.Context) {
-	b.T = "🗑️"
+	return app.Button().Text("🗑️").Class(RemoveButtonCss).ID(b.ID).OnClick(b.onClick)
 }
 func (b *RemoveFlushButton) onClick(ctx app.Context, e app.Event) {
-	log.Println("Flush remove button pressed...")
-	if b.T == "🗑️" {
-		app.Window().GetElementByID(b.ID).Set("className", RemoveButtonCss)
-		b.T = "DEL?🗑️"
-		return
-	} else if b.T == "DEL?🗑️" {
-		log.Println("removing flush " + b.ID + "...")
-		ShowLoading("flushes-loading")
-		defer Hide("flushes-loading")
+	log.Printf("Flush remove button pressed (%s)...\n", b.ID)
+	app.Window().GetElementByID(b.ID).Set("className", InviCss)
+	app.Window().GetElementByID(b.ID+"-confirm").Set("className", RemoveButtonCss)
+	app.Window().GetElementByID(b.ID+"-cancel").Set("className", YellowButtonCss)
+}
+
+type ConfirmRemoveFlushButton struct {
+	app.Compo
+	ID string
+}
+
+func (b *ConfirmRemoveFlushButton) Render() app.UI {
+	return app.Button().
+		Text("CONFIRM DELETE").
+		Class(InviCss).
+		ID(b.ID + "-confirm").
+		OnClick(b.onClick)
+}
+func (b *ConfirmRemoveFlushButton) onClick(ctx app.Context, e app.Event) {
+	log.Printf("Confirm remove button pressed (%s)...\n", b.ID)
+	log.Println("removing flush " + b.ID + "...")
+	ShowLoading("flushes-loading")
+	defer Hide("flushes-loading")
+	ctx.Async(func() {
 		var creds Creds
 		ctx.GetState("creds", &creds)
 		err := RemoveFlush(b.ID, creds.UserColonPass)
-		if err != nil {
-			ShowErrorDiv(ctx, err, 1)
-			return
-		}
-		Hide("div-" + b.ID)
-	} else {
-		ShowErrorDiv(ctx, errors.New("Unknown error while flush deleting"), 1)
-	}
+		ctx.Dispatch(func(ctx app.Context) {
+			if err != nil {
+				ShowErrorDiv(ctx, err, 2)
+				return
+			}
+			Hide("div-" + b.ID)
+		})
+	})
+}
+
+type CancelRemoveFlushButton struct {
+	app.Compo
+	ID string
+}
+
+func (b *CancelRemoveFlushButton) Render() app.UI {
+	return app.Button().
+		Text("CANCEL").
+		Class(InviCss).
+		ID(b.ID + "-cancel").
+		OnClick(b.onClick)
+}
+func (b *CancelRemoveFlushButton) onClick(ctx app.Context, e app.Event) {
+	log.Printf("Cancel remove button pressed (%s)...\n", b.ID)
+	app.Window().GetElementByID(b.ID).Set("className", RemoveButtonCss)
+	app.Window().GetElementByID(b.ID+"-confirm").Set("className", InviCss)
+	app.Window().GetElementByID(b.ID+"-cancel").Set("className", InviCss)
 }
 
 type LoadingWidget struct {
@@ -804,4 +865,15 @@ func (c *RemoveAccountButton) OnClick(ctx app.Context, e app.Event) {
 	}
 	ctx.SetState("creds", Creds{LoggedIn: false}).PersistWithEncryption()
 	app.Window().Set("location", ".")
+}
+
+func GetFlushesFromOID(ctx app.Context) app.UI {
+	var skip int
+	ctx.GetState("skip", &skip)
+	fls, err := GetFlushes(ctx, skip)
+	if err != nil {
+		return nil
+	}
+	result := FlushTable(fls, ctx)
+	return result
 }

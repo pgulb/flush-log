@@ -135,3 +135,40 @@ func Login(username string, password string) (*rod.Page, *rod.Browser) {
 	log.Println("return from Login()")
 	return p, b
 }
+
+func CreateFlush(
+	register bool,
+	user string,
+	pass string,
+	timeStart time.Time,
+) (*rod.Page, *rod.Browser, error) {
+	var p *rod.Page
+	var b *rod.Browser
+	if register {
+		p, b = RegisterAndGoToNew(user, pass, pass)
+	} else {
+		p, b = Login(user, pass)
+		err := p.Navigate(os.Getenv("GOAPP_URL") + "/new")
+		if err != nil {
+			return p, b, err
+		}
+		err = p.WaitStable(time.Second * 2)
+		if err != nil {
+			return p, b, err
+		}
+	}
+	p.MustElement("#new-flush-time-start").MustInputTime(timeStart)
+	p.MustElement("#new-flush-time-end").MustInputTime(timeStart.Add(time.Minute * 10))
+	p.MustElement("#new-flush-rating").MustInput("5")
+	p.MustElement("#new-flush-phone-used").MustClick()
+	p.MustElement("#new-flush-note").MustInput("test comment")
+	p.MustElement("#submit-flush-button").MustClick()
+	err := p.WaitStable(time.Second * 2)
+	if err != nil {
+		return p, b, err
+	}
+	if err := CheckErrorDivText(p, "placeholder"); err != nil {
+		return p, b, err
+	}
+	return p, b, nil
+}
