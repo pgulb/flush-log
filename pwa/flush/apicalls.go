@@ -9,6 +9,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/maxence-charriere/go-app/v10/pkg/app"
@@ -141,7 +143,7 @@ func TryAddFlush(creds Creds, flush Flush) (int, error) {
 	return r.StatusCode, nil
 }
 
-func GetFlushes(ctx app.Context) ([]Flush, error) {
+func GetFlushes(ctx app.Context, skip int) ([]Flush, error) {
 	apiUrl, err := GetApiUrl()
 	if err != nil {
 		return nil, err
@@ -153,6 +155,11 @@ func GetFlushes(ctx app.Context) ([]Flush, error) {
 	var c Creds
 	ctx.GetState("creds", &c)
 	req.Header.Add("Authorization", "Basic "+c.UserColonPass)
+	log.Println("flush fetch skip: ", skip)
+	log.Println("adding skip to /flushes...")
+	q := url.Values{}
+	q.Add("skip", strconv.Itoa(skip))
+	req.URL.RawQuery = q.Encode()
 	r, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -195,6 +202,9 @@ func GetFlushes(ctx app.Context) ([]Flush, error) {
 	}
 	log.Println("temporary flush struct: ", temp)
 	log.Println("Flushes: ", flushes)
+	if len(flushes) > 0 {
+		ctx.SetState("skip", skip+3)
+	}
 	return flushes, nil
 }
 
