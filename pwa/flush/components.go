@@ -233,7 +233,7 @@ func (b *buttonLogin) Render() app.UI {
 		YellowButtonCss + " hover:bg-yellow-700").ID("login-button")
 }
 func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
-	loginSeconds := 60
+	loginSeconds := 600
 	log.Println("Trying to log in...")
 	ShowLoading("login-loading")
 	if app.Window().GetElementByID("remember-me").Get("checked").Bool() {
