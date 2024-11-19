@@ -25,6 +25,14 @@ func Run() {
 			Styles: []string{
 				"/web/style.css",
 			},
+			Image: "/web/paper.png",
+			Icon: app.Icon{
+				Maskable: "/web/paper.png",
+				Default:  "/web/paper.png",
+				Large:    "/web/paper.png",
+				SVG:      "/web/paper.svg",
+			},
+			LoadingLabel: "Unrolling paper...",
 		})
 		if err != nil {
 			log.Fatal(err)
@@ -50,6 +58,14 @@ func Run() {
 		Scripts: []string{
 			"https://cdn.tailwindcss.com",
 		},
+		Image: "/web/paper.png",
+		Icon: app.Icon{
+			Maskable: "/web/paper.png",
+			Default:  "/web/paper.png",
+			Large:    "/web/paper.png",
+			SVG:      "/web/paper.svg",
+		},
+		LoadingLabel: "Unrolling paper...",
 	})
 
 	if err := http.ListenAndServe(port, nil); err != nil {
