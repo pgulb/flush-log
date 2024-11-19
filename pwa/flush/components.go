@@ -250,31 +250,33 @@ func (b *buttonLogin) onClick(ctx app.Context, e app.Event) {
 		return
 	}
 	ctx.Async(func() {
-		defer Hide("login-loading")
 		status, basic_auth, err := TryLogin(user, pass)
 		if err != nil {
 			ShowErrorDiv(ctx, err, 1)
 			return
 		}
-		switch status {
-		case 200:
-			ctx.SetState("creds", Creds{
-				UserColonPass: basic_auth,
-				LoggedIn:      true,
-			}).ExpiresIn(time.Second * time.Duration(loginSeconds)).PersistWithEncryption()
-			log.Printf("Logged in as %s\n for %v seconds!", user, loginSeconds)
-			app.Window().Set("location", ".")
-			ctx.DelState("lastUsedCreds")
-		case 401:
-			ShowErrorDiv(ctx, errors.New("invalid credentials"), 1)
-			ctx.SetState("lastUsedCreds", LastTriedCreds{
-				User:     user,
-				Password: pass,
-			}).ExpiresIn(time.Second * 10)
-		default:
-			ShowErrorDiv(ctx, errors.New("login failed"), 1)
-			ctx.DelState("lastUsedCreds")
-		}
+		ctx.Dispatch(func(ctx app.Context) {
+			defer Hide("login-loading")
+			switch status {
+			case 200:
+				ctx.SetState("creds", Creds{
+					UserColonPass: basic_auth,
+					LoggedIn:      true,
+				}).ExpiresIn(time.Second * time.Duration(loginSeconds)).PersistWithEncryption()
+				log.Printf("Logged in as %s\n for %v seconds!", user, loginSeconds)
+				app.Window().Set("location", ".")
+				ctx.DelState("lastUsedCreds")
+			case 401:
+				ShowErrorDiv(ctx, errors.New("invalid credentials"), 1)
+				ctx.SetState("lastUsedCreds", LastTriedCreds{
+					User:     user,
+					Password: pass,
+				}).ExpiresIn(time.Second * 10)
+			default:
+				ShowErrorDiv(ctx, errors.New("login failed"), 1)
+				ctx.DelState("lastUsedCreds")
+			}
+		})
 	})
 }
 
@@ -299,30 +301,32 @@ func (b *buttonRegister) onClick(ctx app.Context, e app.Event) {
 		return
 	}
 	ctx.Async(func() {
-		defer Hide("register-loading")
 		status, basic_auth, err := TryRegister(user, pass)
 		log.Println("register status code: ", status)
 		if err != nil {
 			ShowErrorDiv(ctx, err, 1)
 		}
-		switch status {
-		case 201:
-			ctx.SetState("creds", Creds{
-				UserColonPass: basic_auth,
-				LoggedIn:      true,
-			}).ExpiresIn(time.Second * time.Duration(604800)).PersistWithEncryption()
-			ctx.DelState("lastUsedCredsRegister")
-			app.Window().Set("location", ".")
-		case 422:
-			ShowBadRegisterCredsErr()
-			SetLastUsedCredsState(ctx, user, pass)
-		case 409:
-			ShowErrorDiv(ctx, errors.New("username already exists"), 1)
-			SetLastUsedCredsState(ctx, user, pass)
-		default:
-			ShowErrorDiv(ctx, errors.New("register failed"), 1)
-			ctx.DelState("lastUsedCredsRegister")
-		}
+		ctx.Dispatch(func(ctx app.Context) {
+			defer Hide("register-loading")
+			switch status {
+			case 201:
+				ctx.SetState("creds", Creds{
+					UserColonPass: basic_auth,
+					LoggedIn:      true,
+				}).ExpiresIn(time.Second * time.Duration(604800)).PersistWithEncryption()
+				ctx.DelState("lastUsedCredsRegister")
+				app.Window().Set("location", ".")
+			case 422:
+				ShowBadRegisterCredsErr()
+				SetLastUsedCredsState(ctx, user, pass)
+			case 409:
+				ShowErrorDiv(ctx, errors.New("username already exists"), 1)
+				SetLastUsedCredsState(ctx, user, pass)
+			default:
+				ShowErrorDiv(ctx, errors.New("register failed"), 1)
+				ctx.DelState("lastUsedCredsRegister")
+			}
+		})
 	})
 }
 
@@ -459,19 +463,21 @@ func (b *SubmitFlushButton) onClick(ctx app.Context, e app.Event) {
 		return
 	}
 	ctx.Async(func() {
-		defer Hide("new-flush-loading")
 		statusCode, err := TryAddFlush(creds, flush)
 		log.Println("Flush add statusCode: ", statusCode)
-		if err != nil {
-			ShowErrorDiv(ctx, err, 2)
-			return
-		}
-		switch statusCode {
-		case 201, 204:
-			app.Window().Set("location", ".")
-		default:
-			ShowErrorDiv(ctx, errors.New("Unexpected error while adding flush"), 2)
-		}
+		ctx.Dispatch(func(ctx app.Context) {
+			defer Hide("new-flush-loading")
+			if err != nil {
+				ShowErrorDiv(ctx, err, 2)
+				return
+			}
+			switch statusCode {
+			case 201, 204:
+				app.Window().Set("location", ".")
+			default:
+				ShowErrorDiv(ctx, errors.New("Unexpected error while adding flush"), 2)
+			}
+		})
 	})
 }
 
@@ -599,12 +605,12 @@ func (b *ConfirmRemoveFlushButton) onClick(ctx app.Context, e app.Event) {
 	log.Printf("Confirm remove button pressed (%s)...\n", b.ID)
 	log.Println("removing flush " + b.ID + "...")
 	ShowLoading("flushes-loading")
-	defer Hide("flushes-loading")
 	ctx.Async(func() {
 		var creds Creds
 		ctx.GetState("creds", &creds)
 		err := RemoveFlush(b.ID, creds.UserColonPass)
 		ctx.Dispatch(func(ctx app.Context) {
+			defer Hide("flushes-loading")
 			if err != nil {
 				ShowErrorDiv(ctx, err, 2)
 				return
