@@ -24,6 +24,7 @@ func Run() {
 			Resources:   app.GitHubPages("flush-log"),
 			Styles: []string{
 				"/web/style.css",
+				"/web/default_styles.css",
 			},
 			Image: "/web/paper.png",
 			Icon: app.Icon{
@@ -66,6 +67,9 @@ func Run() {
 			SVG:      "/web/paper.svg",
 		},
 		LoadingLabel: "Unrolling paper...",
+		Styles: []string{
+			"/web/default_styles.css",
+		},
 	})
 
 	if err := http.ListenAndServe(port, nil); err != nil {
