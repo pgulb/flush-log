@@ -145,14 +145,19 @@ func (b *RootContainer) Render() app.UI {
 			app.Div().Body(
 				&buttonLogout{},
 				&LinkButton{
-					Text:          "Settings",
+					Text:          "Settings ⚙️",
 					Location:      "settings",
 					AdditionalCss: "hover:bg-amber-800 m-1",
 				},
 				&LinkButton{
-					Text:          "(+)",
-					Location:      "new",
+					Text:          "Give Feedback ✨",
+					Location:      "feedback",
 					AdditionalCss: "hover:bg-amber-800",
+				},
+				&LinkButton{
+					Text:          "Add 🧻",
+					Location:      "new",
+					AdditionalCss: "hover:bg-amber-800 m-1",
 				},
 				&InstallButton{},
 			).ID("root-buttons-container").Class(InviCss),
@@ -996,4 +1001,81 @@ func StatsDiv(ctx app.Context) (app.UI, error) {
 			app.P().Text("Percent with phone used: "+strconv.Itoa(stats.PercentPhoneUsed)+"%"),
 		).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg font-bold"),
 		nil
+}
+
+type GiveFeedbackContainer struct {
+	app.Compo
+}
+
+func (c *GiveFeedbackContainer) OnMount(ctx app.Context) {
+	var creds Creds
+	ctx.GetState("creds", &creds)
+	log.Println("Logged in: ", creds.LoggedIn)
+	if !creds.LoggedIn {
+		app.Window().Set("location", "login")
+		return
+	}
+}
+func (c *GiveFeedbackContainer) Render() app.UI {
+	return app.Div().Body(
+		&UpdateButton{},
+		app.Div().Body(
+			app.Div().Body(
+				app.P().Text("Feedback").Class("font-bold"),
+				app.Br(),
+				app.Textarea().Placeholder("your feedback").ID(
+					"feedback-text").MaxLength(300),
+				app.Br(),
+				&SubmitFeedbackButton{},
+				&LoadingWidget{id: "new-feedback-loading"},
+			).Class("p-4 text-center text-xl shadow-lg bg-zinc-800 rounded-lg"),
+			app.Br(),
+			&LinkButton{
+				Text:          "Back to Home Screen",
+				Location:      ".",
+				AdditionalCss: "hover:bg-amber-800",
+			},
+		).
+			Class("flex flex-col"),
+		app.Div().Body(&ErrorContainer{}),
+	).Class(CenteringDivCss)
+}
+
+type SubmitFeedbackButton struct {
+	app.Compo
+}
+
+func (c *SubmitFeedbackButton) Render() app.UI {
+	return app.Button().
+		Text("Submit").
+		OnClick(c.onClick).
+		Class(YellowButtonCss + " hover:bg-amber-800").ID("submit-feedback-button")
+}
+func (c *SubmitFeedbackButton) onClick(ctx app.Context, e app.Event) {
+	ShowLoading("new-feedback-loading")
+	var creds Creds
+	ctx.GetState("creds", &creds)
+	note := app.Window().GetElementByID("feedback-text").Get("value").String()
+	if len([]rune(note)) < 30 {
+		Hide("new-feedback-loading")
+		ShowErrorDiv(ctx, errors.New("Feedback too short (< 30 characters)"), 1)
+		return
+	}
+	ctx.Async(func() {
+		statusCode, err := GiveFeedback(creds, note)
+		ctx.Dispatch(func(ctx app.Context) {
+			defer Hide("new-feedback-loading")
+			if err != nil {
+				Hide("new-feedback-loading")
+				ShowErrorDiv(ctx, err, 2)
+				return
+			}
+			if statusCode >= 400 {
+				Hide("new-feedback-loading")
+				ShowErrorDiv(ctx, errors.New("Failed to submit feedback"), 2)
+				return
+			}
+		})
+	})
+	app.Window().Set("location", ".")
 }
