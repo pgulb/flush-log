@@ -22,6 +22,7 @@ const (
 	LoadingCss       = "flex flex-row justify-center items-center"
 	RemoveButtonCss  = "font-bold bg-red-500 p-2 rounded hover:bg-red-700 m-1"
 	LogoutButtonCss  = "font-bold bg-amber-700 p-2 rounded mx-1 hover:bg-amber-900"
+	UpdateButtonCss  = "bg-green-600 hover:bg-green-800 text-xl p-2 rounded bottom-4 right-4 fixed"
 )
 
 type ErrorContainer struct {
@@ -127,6 +128,7 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 func (b *RootContainer) Render() app.UI {
 	return app.Div().Body(
 		app.P().Text("empty").Class("invisible fixed").ID("hidden-hello"),
+		&UpdateButton{},
 		app.Div().Body(
 			app.H1().Text("Flush Log").Class("text-2xl"),
 			app.Div().Body(
@@ -200,29 +202,31 @@ type LoginContainer struct {
 }
 
 func (l *LoginContainer) Render() app.UI {
-	return app.Div().Body(app.Div().Body(
-		app.P().Text("Log in to continue.").Class("font-bold"),
+	return app.Div().Body(
+		&UpdateButton{},
 		app.Div().Body(
-			app.Input().Type("text").ID("username").Placeholder("Username").Class(
-				"m-2",
-			),
-			app.Br(),
-			app.Input().Type("password").ID("password").Placeholder("Password").Class(
-				"m-2",
-			),
-			app.Br(),
+			app.P().Text("Log in to continue.").Class("font-bold"),
 			app.Div().Body(
-				app.Input().Type("checkbox").ID("remember-me").Class("m-2"),
-				app.Label().For("remember-me").Text("Remember me").Class("p-2"),
+				app.Input().Type("text").ID("username").Placeholder("Username").Class(
+					"m-2",
+				),
+				app.Br(),
+				app.Input().Type("password").ID("password").Placeholder("Password").Class(
+					"m-2",
+				),
+				app.Br(),
+				app.Div().Body(
+					app.Input().Type("checkbox").ID("remember-me").Class("m-2"),
+					app.Label().For("remember-me").Text("Remember me").Class("p-2"),
+				),
+				app.Br(),
+				app.Div().Body(
+					&buttonLogin{},
+					&buttonShowRegister{},
+				),
+				&LoadingWidget{id: "login-loading"},
 			),
-			app.Br(),
-			app.Div().Body(
-				&buttonLogin{},
-				&buttonShowRegister{},
-			),
-			&LoadingWidget{id: "login-loading"},
-		),
-	).Class("p-4 text-center text-xl shadow-lg bg-zinc-800 rounded-lg").ID("login-container"),
+		).Class("p-4 text-center text-xl shadow-lg bg-zinc-800 rounded-lg").ID("login-container"),
 		&RegisterContainer{},
 		app.Div().Body(&ErrorContainer{})).Class(
 		CenteringDivCss)
@@ -353,6 +357,7 @@ type NewFlushContainer struct {
 
 func (c *NewFlushContainer) Render() app.UI {
 	return app.Div().Body(
+		&UpdateButton{},
 		app.Div().Body(
 			app.Div().Body(
 				app.P().Text("Add new flush").Class("font-bold"),
@@ -496,6 +501,7 @@ type AboutContainer struct {
 
 func (a *AboutContainer) Render() app.UI {
 	return app.Div().Body(
+		&UpdateButton{},
 		app.Div().Body(
 			app.Div().Body(
 				app.H1().Text("About Flush Log").Class("text-2xl bold inline"),
@@ -673,6 +679,7 @@ type SettingsContainer struct {
 
 func (s *SettingsContainer) Render() app.UI {
 	return app.Div().Body(
+		&UpdateButton{},
 		app.Div().Body(
 			app.Div().Body(
 				app.H1().Text("App Settings").Class("text-2xl m-2"),
@@ -899,4 +906,29 @@ func GetFlushesFromOID(ctx app.Context) app.UI {
 	}
 	result := FlushTable(fls, ctx)
 	return result
+}
+
+type UpdateButton struct {
+	app.Compo
+	updateAvailable bool
+	Css             string
+}
+
+func (c *UpdateButton) OnAppUpdate(ctx app.Context) {
+	c.updateAvailable = ctx.AppUpdateAvailable()
+}
+func (c *UpdateButton) Render() app.UI {
+	if c.updateAvailable {
+		c.Css = UpdateButtonCss
+		log.Println("There is an update available!")
+	} else {
+		c.Css = InviCss
+	}
+	return app.Button().
+		Text("Update App ⬇️").
+		OnClick(c.onUpdateClick).
+		Class(c.Css)
+}
+func (c *UpdateButton) onUpdateClick(ctx app.Context, e app.Event) {
+	ctx.Reload()
 }
