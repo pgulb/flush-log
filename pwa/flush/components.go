@@ -23,6 +23,7 @@ const (
 	RemoveButtonCss  = "font-bold bg-red-500 p-2 rounded hover:bg-red-700 m-1"
 	LogoutButtonCss  = "font-bold bg-amber-700 p-2 rounded mx-1 hover:bg-amber-900"
 	UpdateButtonCss  = "bg-green-600 hover:bg-green-800 text-xl p-2 rounded bottom-4 right-4 fixed"
+	InstallButtonCss = "bg-green-600 hover:bg-green-800 p-2 rounded m-2"
 )
 
 type ErrorContainer struct {
@@ -143,6 +144,7 @@ func (b *RootContainer) Render() app.UI {
 					Location:      "new",
 					AdditionalCss: "hover:bg-amber-800",
 				},
+				&InstallButton{},
 			).ID("root-buttons-container").Class("flex flex-col absolute top-4 right-4"),
 			app.P().Text("Tracked flushes:").Class("py-2"),
 			&LoadingWidget{id: "flushes-loading"},
@@ -522,6 +524,7 @@ func (a *AboutContainer) Render() app.UI {
 				Location:      "login",
 				AdditionalCss: "hover:bg-amber-800",
 			},
+			&InstallButton{},
 		).Class("flex flex-col p-4 shadow-lg rounded-lg bg-zinc-800"),
 	).Class(CenteringDivCss).ID("about-container")
 }
@@ -931,4 +934,31 @@ func (c *UpdateButton) Render() app.UI {
 }
 func (c *UpdateButton) onUpdateClick(ctx app.Context, e app.Event) {
 	ctx.Reload()
+}
+
+type InstallButton struct {
+	app.Compo
+	name             string
+	isAppInstallable bool
+}
+
+func (b *InstallButton) OnMount(ctx app.Context) {
+	b.isAppInstallable = ctx.IsAppInstallable()
+}
+func (b *InstallButton) OnAppInstallChange(ctx app.Context) {
+	b.isAppInstallable = ctx.IsAppInstallable()
+}
+func (b *InstallButton) Render() app.UI {
+	return app.Div().
+		Body(
+			app.If(b.isAppInstallable, func() app.UI {
+				return app.Button().
+					Text("Install App").
+					OnClick(b.onInstallButtonClicked).
+					Class(InstallButtonCss)
+			}),
+		).Class("flex flex-col")
+}
+func (b *InstallButton) onInstallButtonClicked(ctx app.Context, e app.Event) {
+	ctx.ShowAppInstallPrompt()
 }
