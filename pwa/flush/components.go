@@ -88,6 +88,7 @@ func (r *RegisterContainer) Render() app.UI {
 type RootContainer struct {
 	app.Compo
 	buttonUpdate
+	Stats     app.UI
 	FlushList app.UI
 }
 
@@ -104,8 +105,13 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 		app.Window().GetElementByID("about-container").Set("className", "invisible fixed")
 		ShowLoading("flushes-loading")
 		ctx.Async(func() {
+			stats, err := StatsDiv(ctx)
 			result := GetFlushesFromOID(ctx)
 			ctx.Dispatch(func(ctx app.Context) {
+				if err != nil {
+					ShowErrorDiv(ctx, err, 2)
+					return
+				}
 				defer Hide("flushes-loading")
 				if result == nil {
 					ShowErrorDiv(ctx, errors.New("Error while fetching flushes"), 2)
@@ -113,6 +119,7 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 				}
 				app.Window().GetElementByID("hidden-hello").Set("innerHTML", "hello!")
 				b.SetList(result)
+				b.Stats = stats
 				var isEmpty string
 				ctx.GetState("no-flushes", &isEmpty)
 				log.Println("no-flushes: ", isEmpty)
@@ -151,6 +158,7 @@ func (b *RootContainer) Render() app.UI {
 			).ID("root-buttons-container").Class(InviCss),
 			app.P().Text("Tracked flushes:").Class("py-2"),
 			&LoadingWidget{id: "flushes-loading"},
+			b.Stats,
 			b.FlushList,
 			app.Div().Body(
 				&b.buttonUpdate,
@@ -559,20 +567,6 @@ func FlushTable(flushes []Flush, ctx app.Context) app.UI {
 			).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg").ID("div-"+flush.ID),
 		)
 	}
-	stats, err := GetStats(ctx)
-	if err != nil {
-		ShowErrorDiv(ctx, err, 3)
-		return app.Div()
-	}
-	statsDiv := app.Div().Body(
-		app.P().Text("Total flushes: "+strconv.Itoa(stats.FlushCount)),
-		app.P().Text("Total time: "+strconv.Itoa(stats.TotalTime)+" minutes"),
-		app.P().Text("Mean time: "+strconv.Itoa(stats.MeanTime)+" minutes"),
-		app.P().Text("Mean rating: "+strconv.Itoa(stats.MeanRating)),
-		app.P().Text("Times with phone used: "+strconv.Itoa(stats.PhoneUsedCount)),
-		app.P().Text("Percent with phone used: "+strconv.Itoa(stats.PercentPhoneUsed)+"%"),
-	).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg font-bold")
-	divs = append([]app.UI{statsDiv}, divs...)
 	return app.Div().Body(divs...)
 }
 
@@ -986,4 +980,20 @@ func (b *BurgerMenuButton) OnClick(ctx app.Context, e app.Event) {
 		b.alreadyClicked = true
 		app.Window().GetElementByID("root-buttons-container").Set("className", RootButtonsCss)
 	}
+}
+
+func StatsDiv(ctx app.Context) (app.UI, error) {
+	stats, err := GetStats(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return app.Div().Body(
+			app.P().Text("Total flushes: "+strconv.Itoa(stats.FlushCount)),
+			app.P().Text("Total time: "+strconv.Itoa(stats.TotalTime)+" minutes"),
+			app.P().Text("Mean time: "+strconv.Itoa(stats.MeanTime)+" minutes"),
+			app.P().Text("Mean rating: "+strconv.Itoa(stats.MeanRating)),
+			app.P().Text("Times with phone used: "+strconv.Itoa(stats.PhoneUsedCount)),
+			app.P().Text("Percent with phone used: "+strconv.Itoa(stats.PercentPhoneUsed)+"%"),
+		).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg font-bold"),
+		nil
 }
