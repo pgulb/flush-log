@@ -2,6 +2,8 @@ name: Build and test PWA image
 
 on:
   push:
+    paths:
+      - pwa/**
 
 env:
   REGISTRY: ghcr.io

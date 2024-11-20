@@ -1,13 +1,13 @@
 name: Deploy static content to Pages
 
 on:
-    workflow_run:
-        workflows:
-            - Build and test PWA image
-        branches:
-            - main
-        types:
-            - completed
+  workflow_run:
+    workflows:
+      - Build and test PWA image
+    branches:
+      - main
+    types:
+      - completed
 
 permissions:
   contents: read
