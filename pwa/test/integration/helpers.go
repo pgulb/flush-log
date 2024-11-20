@@ -136,6 +136,19 @@ func Login(username string, password string) (*rod.Page, *rod.Browser) {
 	return p, b
 }
 
+func RegisterAndGoToFeedback(user string, pass string,
+	repeatPass string) (*rod.Page, *rod.Browser) {
+	log.Println("using RegisterAndGoToFeedback()")
+	p, b := Register(user, pass, repeatPass)
+	p.Navigate(os.Getenv("GOAPP_URL") + "/feedback")
+	err := p.WaitStable(time.Second * 2)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("return from RegisterAndGoToFeedback()")
+	return p, b
+}
+
 func CreateFlush(
 	register bool,
 	user string,
@@ -168,6 +181,39 @@ func CreateFlush(
 		return p, b, err
 	}
 	if err := CheckErrorDivText(p, "placeholder"); err != nil {
+		return p, b, err
+	}
+	return p, b, nil
+}
+func CreateFeedback(
+	register bool,
+	user string,
+	pass string,
+	note string,
+	expectedErrorDivText string,
+) (*rod.Page, *rod.Browser, error) {
+	var p *rod.Page
+	var b *rod.Browser
+	if register {
+		p, b = RegisterAndGoToFeedback(user, pass, pass)
+	} else {
+		p, b = Login(user, pass)
+		err := p.Navigate(os.Getenv("GOAPP_URL") + "/feedback")
+		if err != nil {
+			return p, b, err
+		}
+		err = p.WaitStable(time.Second * 2)
+		if err != nil {
+			return p, b, err
+		}
+	}
+	p.MustElement("#feedback-text").MustInput(note)
+	p.MustElement("#submit-feedback-button").MustClick()
+	err := p.WaitStable(time.Second * 2)
+	if err != nil {
+		return p, b, err
+	}
+	if err := CheckErrorDivText(p, expectedErrorDivText); err != nil {
 		return p, b, err
 	}
 	return p, b, nil

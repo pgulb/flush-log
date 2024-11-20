@@ -316,3 +316,24 @@ func GetStats(ctx app.Context) (FlushStatsInt, error) {
 	statsInt.PercentPhoneUsed = int(stats.PercentPhoneUsed)
 	return statsInt, nil
 }
+
+func GiveFeedback(creds Creds, note string) (int, error) {
+	apiUrl, err := GetApiUrl()
+	if err != nil {
+		return 0, err
+	}
+	req, err := http.NewRequest("POST", apiUrl+"/feedback", nil)
+	if err != nil {
+		return 0, err
+	}
+	req.Header.Add("Authorization", "Basic "+creds.UserColonPass)
+	q := url.Values{}
+	q.Add("note", note)
+	req.URL.RawQuery = q.Encode()
+	r, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer CloseBody(r)
+	return r.StatusCode, nil
+}
