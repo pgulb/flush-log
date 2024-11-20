@@ -1,4 +1,5 @@
 import csv
+import datetime
 import io
 import json
 import logging
@@ -20,7 +21,7 @@ from fastapi import Depends, HTTPException, Query, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasicCredentials
 from httpbasic import HTTPBasic
-from models import Flush, User
+from models import Feedback, Flush, User
 
 app = fastapi.FastAPI()
 origins = [
@@ -116,7 +117,13 @@ def create_user(user: User):
     users = database.users
     pass_hash = hash_password(user.password)
     try:
-        users.insert_one({"_id": user.username, "pass_hash": pass_hash})
+        users.insert_one(
+            {
+                "_id": user.username,
+                "pass_hash": pass_hash,
+                "registered_at": datetime.datetime.now(datetime.UTC),
+            }
+        )
     except pymongo.errors.DuplicateKeyError as e:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="User already exists"
@@ -365,3 +372,29 @@ def get_flush_stats(credentials: HTTPBasicCredentials = Depends(security)):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Error getting stats"
         ) from e
+
+
+@app.post("/feedback", status_code=status.HTTP_201_CREATED)
+def give_feedback(
+    feedback: Feedback = Query(), credentials: HTTPBasicCredentials = Depends(security)
+):
+    check_creds(credentials)
+    feedbacks = client.flush.feedbacks
+    try:
+        feedbacks.insert_one(
+            {
+                "user_id": credentials.username,
+                "note": feedback.note,
+                "submission_time": datetime.datetime.now(datetime.UTC),
+            }
+        )
+        return Response(status_code=status.HTTP_201_CREATED)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Error giving feedback"
+        ) from e
+
+
+def get_feedback_count(username: str) -> int:
+    feedbacks = client.flush.feedbacks
+    return feedbacks.count_documents({"user_id": username})
