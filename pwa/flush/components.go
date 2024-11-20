@@ -13,17 +13,19 @@ import (
 )
 
 const (
-	YellowButtonCss  = "font-bold bg-amber-600 p-2 rounded mx-1"
-	ErrorDivCss      = "flex flex-row fixed bottom-4 left-4 bg-red-500 p-4 text-xl rounded-lg"
-	CenteringDivCss  = "flex flex-row min-h-screen justify-center items-center"
-	WindowDivCss     = "p-4 text-center text-xl shadow-lg bg-zinc-800 rounded-lg mx-10"
-	InviCss          = "fixed invisible"
-	RootContainerCss = "shadow-lg bg-zinc-800 rounded-lg p-6 min-h-72 relative"
-	LoadingCss       = "flex flex-row justify-center items-center"
-	RemoveButtonCss  = "font-bold bg-red-500 p-2 rounded hover:bg-red-700 m-1"
-	LogoutButtonCss  = "font-bold bg-amber-700 p-2 rounded mx-1 hover:bg-amber-900"
-	UpdateButtonCss  = "bg-green-600 hover:bg-green-800 text-xl p-2 rounded bottom-4 right-4 fixed"
-	InstallButtonCss = "bg-green-600 hover:bg-green-800 p-2 rounded m-2"
+	YellowButtonCss     = "font-bold bg-amber-600 p-2 rounded mx-1"
+	ErrorDivCss         = "flex flex-row fixed bottom-4 left-4 bg-red-500 p-4 text-xl rounded-lg"
+	CenteringDivCss     = "flex flex-row min-h-screen justify-center items-center"
+	WindowDivCss        = "p-4 text-center text-xl shadow-lg bg-zinc-800 rounded-lg mx-10"
+	InviCss             = "fixed invisible"
+	RootContainerCss    = "shadow-lg bg-zinc-800 rounded-lg p-6 min-h-72 relative"
+	LoadingCss          = "flex flex-row justify-center items-center"
+	RemoveButtonCss     = "font-bold bg-red-500 p-2 rounded hover:bg-red-700 m-1"
+	LogoutButtonCss     = "font-bold bg-orange-600 p-2 rounded mx-1 hover:bg-orange-800"
+	UpdateButtonCss     = "bg-green-600 hover:bg-green-800 text-xl p-2 rounded bottom-4 right-4 fixed"
+	InstallButtonCss    = "bg-green-600 hover:bg-green-800 p-2 rounded m-2"
+	BurgerMenuButtonCss = "text-xl fixed top-4 right-4"
+	RootButtonsCss      = "flex flex-col absolute top-12 right-4"
 )
 
 type ErrorContainer struct {
@@ -132,6 +134,7 @@ func (b *RootContainer) Render() app.UI {
 		&UpdateButton{},
 		app.Div().Body(
 			app.H1().Text("Flush Log").Class("text-2xl"),
+			&BurgerMenuButton{},
 			app.Div().Body(
 				&buttonLogout{},
 				&LinkButton{
@@ -145,7 +148,7 @@ func (b *RootContainer) Render() app.UI {
 					AdditionalCss: "hover:bg-amber-800",
 				},
 				&InstallButton{},
-			).ID("root-buttons-container").Class("flex flex-col absolute top-4 right-4"),
+			).ID("root-buttons-container").Class(InviCss),
 			app.P().Text("Tracked flushes:").Class("py-2"),
 			&LoadingWidget{id: "flushes-loading"},
 			b.FlushList,
@@ -961,4 +964,26 @@ func (b *InstallButton) Render() app.UI {
 }
 func (b *InstallButton) onInstallButtonClicked(ctx app.Context, e app.Event) {
 	ctx.ShowAppInstallPrompt()
+}
+
+type BurgerMenuButton struct {
+	app.Compo
+	alreadyClicked bool
+}
+
+func (b *BurgerMenuButton) Render() app.UI {
+	return app.Button().
+		Text("☰").
+		Class(BurgerMenuButtonCss).
+		OnClick(b.OnClick).
+		ID("burger-menu-button")
+}
+func (b *BurgerMenuButton) OnClick(ctx app.Context, e app.Event) {
+	if b.alreadyClicked {
+		b.alreadyClicked = false
+		app.Window().GetElementByID("root-buttons-container").Set("className", InviCss)
+	} else {
+		b.alreadyClicked = true
+		app.Window().GetElementByID("root-buttons-container").Set("className", RootButtonsCss)
+	}
 }
