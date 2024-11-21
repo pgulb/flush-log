@@ -50,17 +50,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  build-api:
-    needs: build-pwa
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
-      - name: Build test API image
-        run: docker build -t flush-log:api -f ./api/Dockerfile ./api/
-
   pwa-test:
     needs: [build-pwa, build-api]
     runs-on: ubuntu-latest
@@ -81,12 +70,6 @@ jobs:
           --name mongo_container
         ports:
           - 27017:27017
-      api:
-        image: flush-log:api
-        ports:
-          - 6789:6789
-        env:
-          MONGO_URL: 'mongodb://mongo:27017/?connectTimeoutMS=3000&timeoutMS=4000&socketTimeoutMS=3000&serverSelectionTimeoutMS=4000'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -100,6 +83,10 @@ jobs:
         run: sudo sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
       - name: Install netcat
         run: sudo apt-get update && sudo apt-get install -y netcat-traditional
+      - name: Build test API image
+        run: docker build -t flush-log:api -f ./api/Dockerfile ./api/
+      - name: run API
+        run: docker run --name api -d -p 6789:6789 --net=host -e MONGO_URL='mongodb://mongo:27017/?connectTimeoutMS=3000&timeoutMS=4000&socketTimeoutMS=3000&serverSelectionTimeoutMS=4000' flush-log:api
       - name: wait for a while
         run: sleep 15
       - name: check pwa with nc
