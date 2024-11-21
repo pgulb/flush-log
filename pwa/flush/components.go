@@ -89,7 +89,7 @@ type RootContainer struct {
 	app.Compo
 	buttonUpdate
 	Stats     app.UI
-	FlushList app.UI
+	FlushList []Flush
 }
 
 func (b *RootContainer) OnMount(ctx app.Context) {
@@ -106,8 +106,12 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 		ShowLoading("flushes-loading")
 		ctx.Async(func() {
 			stats, err := StatsDiv(ctx)
-			result := GetFlushesFromOID(ctx)
+			result, more := GetFlushesFromOID(ctx)
+			log.Println("more-data: ", more)
 			ctx.Dispatch(func(ctx app.Context) {
+				if !more {
+					Hide("update-button")
+				}
 				if err != nil {
 					ShowErrorDiv(ctx, err, 2)
 					return
@@ -120,17 +124,18 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 				app.Window().GetElementByID("hidden-hello").Set("innerHTML", "hello!")
 				b.SetList(result)
 				b.Stats = stats
-				var isEmpty string
-				ctx.GetState("no-flushes", &isEmpty)
-				log.Println("no-flushes: ", isEmpty)
-				if isEmpty != "true" {
-					log.Println("Viewing update button")
-					app.Window().GetElementByID("update-button").
-						Set("className", YellowButtonCss+" hover:bg-amber-800 align-middle")
-				} else {
-					log.Println("No flushes, hiding update button")
-					app.Window().GetElementByID("update-button").Set("className", InviCss)
-				}
+				// TODO remove
+				//var isEmpty string
+				//ctx.GetState("no-flushes", &isEmpty)
+				//log.Println("no-flushes: ", isEmpty)
+				//if isEmpty != "true" {
+				//	log.Println("Viewing update button")
+				//	app.Window().GetElementByID("update-button").
+				//		Set("className", YellowButtonCss+" hover:bg-amber-800 align-middle")
+				//} else {
+				//	log.Println("No flushes, hiding update button")
+				//	app.Window().GetElementByID("update-button").Set("className", InviCss)
+				//}
 			})
 		})
 	}
@@ -164,7 +169,7 @@ func (b *RootContainer) Render() app.UI {
 			app.P().Text("Tracked flushes:").Class("py-2"),
 			&LoadingWidget{id: "flushes-loading"},
 			b.Stats,
-			b.FlushList,
+			b.GetList(),
 			app.Div().Body(
 				&b.buttonUpdate,
 				&LoadingWidget{id: "flushes-loading-update"},
@@ -175,8 +180,12 @@ func (b *RootContainer) Render() app.UI {
 		app.Div().Body(&ErrorContainer{}),
 	)
 }
-func (b *RootContainer) SetList(list app.UI) {
-	b.FlushList = list
+func (b *RootContainer) SetList(list []Flush) {
+	b.FlushList = append(b.FlushList, list...)
+}
+
+func (b *RootContainer) GetList() app.UI {
+	return FlushTable(b.FlushList)
 }
 
 type buttonUpdate struct {
@@ -192,25 +201,30 @@ func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 	ShowLoading("flushes-loading-update")
 	Hide("update-button")
 	ctx.Async(func() {
-		result := GetFlushesFromOID(ctx)
+		result, more := GetFlushesFromOID(ctx)
+		log.Println("more-data: ", more)
 		ctx.Dispatch(func(ctx app.Context) {
+			if !more {
+				Hide("update-button")
+			}
 			defer Hide("flushes-loading-update")
 			if result == nil {
 				ShowErrorDiv(ctx, errors.New("Error while fetching flushes"), 2)
 				return
 			}
 			b.parent.SetList(result)
-			var isEmpty string
-			ctx.GetState("no-flushes", &isEmpty)
-			if isEmpty == "true" {
-				log.Println("No flushes, hiding update button")
-				app.Window().GetElementByID("update-button").Set("className", InviCss)
-				b.parent.SetList(app.Div().
-					Body(app.P().Text("No more flushes to show.").Class("py-2")))
-			} else {
-				app.Window().GetElementByID("update-button").
-					Set("className", YellowButtonCss+" hover:bg-amber-800 align-middle")
-			}
+			// TODO remove
+			//var isEmpty string
+			//ctx.GetState("no-flushes", &isEmpty)
+			//if isEmpty == "true" {
+			//	log.Println("No flushes, hiding update button")
+			//	app.Window().GetElementByID("update-button").Set("className", InviCss)
+			//	b.parent.SetList(app.Div().
+			//		Body(app.P().Text("No more flushes to show.").Class("py-2")))
+			//} else {
+			//	app.Window().GetElementByID("update-button").
+			//		Set("className", YellowButtonCss+" hover:bg-amber-800 align-middle")
+			//}
 		})
 	})
 }
@@ -545,9 +559,8 @@ func (a *AboutContainer) Render() app.UI {
 	).Class(CenteringDivCss).ID("about-container")
 }
 
-func FlushTable(flushes []Flush, ctx app.Context) app.UI {
+func FlushTable(flushes []Flush) app.UI {
 	if len(flushes) == 0 {
-		ctx.SetState("no-flushes", "true")
 		return app.Div().Body(app.P().Text("No flushes yet."))
 	}
 	divs := []app.UI{}
@@ -902,15 +915,14 @@ func (c *RemoveAccountButton) OnClick(ctx app.Context, e app.Event) {
 	app.Window().Set("location", ".")
 }
 
-func GetFlushesFromOID(ctx app.Context) app.UI {
+func GetFlushesFromOID(ctx app.Context) ([]Flush, bool) {
 	var skip int
 	ctx.GetState("skip", &skip)
-	fls, err := GetFlushes(ctx, skip)
+	fls, more, err := GetFlushes(ctx, skip)
 	if err != nil {
-		return nil
+		return nil, false
 	}
-	result := FlushTable(fls, ctx)
-	return result
+	return fls, more
 }
 
 type UpdateButton struct {

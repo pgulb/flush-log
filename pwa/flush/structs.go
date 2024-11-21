@@ -21,6 +21,25 @@ type Flush struct {
 	Note      string    `json:"note"`
 }
 
+type TempFlush struct {
+	TimeStart string `json:"time_start"`
+	TimeEnd   string `json:"time_end"`
+	Rating    int    `json:"rating"`
+	PhoneUsed bool   `json:"phone_used"`
+	Note      string `json:"note"`
+	ID        string `json:"_id"`
+}
+
+type TempFlushes struct {
+	Flushes           []TempFlush `json:"flushes"`
+	MoreDataAvailable bool        `json:"more_data_available"`
+}
+
+type Flushes struct {
+	Flushes           []Flush `json:"flushes"`
+	MoreDataAvailable bool    `json:"more_data_available"`
+}
+
 type FlushStats struct {
 	FlushCount       float64 `json:"flushCount"`
 	TotalTime        float64 `json:"totalTime"`
