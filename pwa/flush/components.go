@@ -124,18 +124,6 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 				app.Window().GetElementByID("hidden-hello").Set("innerHTML", "hello!")
 				b.SetList(result)
 				b.Stats = stats
-				// TODO remove
-				//var isEmpty string
-				//ctx.GetState("no-flushes", &isEmpty)
-				//log.Println("no-flushes: ", isEmpty)
-				//if isEmpty != "true" {
-				//	log.Println("Viewing update button")
-				//	app.Window().GetElementByID("update-button").
-				//		Set("className", YellowButtonCss+" hover:bg-amber-800 align-middle")
-				//} else {
-				//	log.Println("No flushes, hiding update button")
-				//	app.Window().GetElementByID("update-button").Set("className", InviCss)
-				//}
 			})
 		})
 	}
@@ -213,18 +201,6 @@ func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 				return
 			}
 			b.parent.SetList(result)
-			// TODO remove
-			//var isEmpty string
-			//ctx.GetState("no-flushes", &isEmpty)
-			//if isEmpty == "true" {
-			//	log.Println("No flushes, hiding update button")
-			//	app.Window().GetElementByID("update-button").Set("className", InviCss)
-			//	b.parent.SetList(app.Div().
-			//		Body(app.P().Text("No more flushes to show.").Class("py-2")))
-			//} else {
-			//	app.Window().GetElementByID("update-button").
-			//		Set("className", YellowButtonCss+" hover:bg-amber-800 align-middle")
-			//}
 		})
 	})
 }
