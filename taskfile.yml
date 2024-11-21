@@ -54,14 +54,14 @@ tasks:
   test-pwa-integration:
     cmds:
       - go mod download
-      - go test -v
+      - go test -v -failfast
     dir: pwa/test/integration
     env:
       GOAPP_URL: http://localhost:8080
   test-pwa-integration-show-window:
     cmds:
       - go mod download
-      - go test -v -rod=show
+      - go test -v -rod=show -failfast
     dir: pwa/test/integration
     env:
       GOAPP_URL: http://localhost:8080
