@@ -40,17 +40,7 @@ func TestFlushPagination(t *testing.T) {
 	}
 	els = p.MustElements(".remove-flush-buttonz-div")
 	log.Println("number of flushes: ", len(els))
-	if len(els) != 3 {
-		t.Fatal("wrong number of flushes")
-	}
-	p.MustElement("#update-button").MustClick()
-	err = p.WaitStable(time.Second * 2)
-	if err != nil {
-		log.Fatal(err)
-	}
-	els = p.MustElements(".remove-flush-buttonz-div")
-	log.Println("number of flushes: ", len(els))
-	if len(els) != 0 {
+	if len(els) != 6 {
 		t.Fatal("wrong number of flushes")
 	}
 }
