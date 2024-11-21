@@ -17,6 +17,7 @@ func TestRegister(t *testing.T) {
 }
 
 func TestRegisterBadUsernameChars(t *testing.T) {
+	t.Parallel()
 	p, b := Register("user_ęśąćź", "pass_registry_test", "pass_registry_test")
 	defer b.MustClose()
 	defer p.MustClose()
@@ -26,6 +27,7 @@ func TestRegisterBadUsernameChars(t *testing.T) {
 }
 
 func TestRegisterEmptyUsername(t *testing.T) {
+	t.Parallel()
 	p, b := Register("", "pass_registry_test", "pass_registry_test")
 	defer b.MustClose()
 	defer p.MustClose()
@@ -35,6 +37,7 @@ func TestRegisterEmptyUsername(t *testing.T) {
 }
 
 func TestRegisterShortPass(t *testing.T) {
+	t.Parallel()
 	p, b := Register("user_registry_test2", "asd", "asd")
 	defer b.MustClose()
 	defer p.MustClose()
@@ -44,6 +47,7 @@ func TestRegisterShortPass(t *testing.T) {
 }
 
 func TestRegisterEmptyPass(t *testing.T) {
+	t.Parallel()
 	p, b := Register("user_registry_test3", "", "")
 	defer b.MustClose()
 	defer p.MustClose()
@@ -53,6 +57,7 @@ func TestRegisterEmptyPass(t *testing.T) {
 }
 
 func TestRegisterPasswordsDiffer(t *testing.T) {
+	t.Parallel()
 	p, b := Register("user_registry_test3",
 		"asdasdasdasdasddasd", "qweqweqweqweqwe")
 	defer b.MustClose()
@@ -63,6 +68,7 @@ func TestRegisterPasswordsDiffer(t *testing.T) {
 }
 
 func TestRegisterUsernameTaken(t *testing.T) {
+	t.Parallel()
 	p, b := Register("user_registry_test3", "pass_registry_test3",
 		"pass_registry_test3")
 	p2, b2 := Register("user_registry_test3", "pass_registry_test3",
@@ -77,6 +83,7 @@ func TestRegisterUsernameTaken(t *testing.T) {
 }
 
 func TestRegisterSameCredsTwoTimes(t *testing.T) {
+	t.Parallel()
 	p, b := RegisterDoubleClickButton("asd", "asd",
 		"asd")
 	defer b.MustClose()
