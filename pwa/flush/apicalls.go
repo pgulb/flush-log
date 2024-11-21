@@ -143,14 +143,14 @@ func TryAddFlush(creds Creds, flush Flush) (int, error) {
 	return r.StatusCode, nil
 }
 
-func GetFlushes(ctx app.Context, skip int) ([]Flush, error) {
+func GetFlushes(ctx app.Context, skip int) ([]Flush, bool, error) {
 	apiUrl, err := GetApiUrl()
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	req, err := http.NewRequest("GET", apiUrl+"/flushes", nil)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	var c Creds
 	ctx.GetState("creds", &c)
@@ -162,7 +162,7 @@ func GetFlushes(ctx app.Context, skip int) ([]Flush, error) {
 	req.URL.RawQuery = q.Encode()
 	r, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	defer CloseBody(r)
 	if r.StatusCode >= 400 {
@@ -171,41 +171,44 @@ func GetFlushes(ctx app.Context, skip int) ([]Flush, error) {
 	}
 	bytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	temp := []struct {
-		TimeStart string `json:"time_start"`
-		TimeEnd   string `json:"time_end"`
-		Rating    int    `json:"rating"`
-		PhoneUsed bool   `json:"phone_used"`
-		Note      string `json:"note"`
-		ID        string `json:"_id"`
-	}{}
+	var temp TempFlushes
 	err = json.Unmarshal(bytes, &temp)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	flushes := make([]Flush, len(temp))
-	for i := range temp {
-		flushes[i].TimeStart, err = time.Parse("2006-01-02T15:04:05", temp[i].TimeStart)
+	log.Println("more data available: ", temp.MoreDataAvailable)
+	flushes := Flushes{
+		Flushes:           make([]Flush, len(temp.Flushes)),
+		MoreDataAvailable: temp.MoreDataAvailable,
+	}
+	for i := range temp.Flushes {
+		flushes.Flushes[i].TimeStart, err = time.Parse(
+			"2006-01-02T15:04:05",
+			temp.Flushes[i].TimeStart,
+		)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
-		flushes[i].TimeEnd, err = time.Parse("2006-01-02T15:04:05", temp[i].TimeEnd)
+		flushes.Flushes[i].TimeEnd, err = time.Parse("2006-01-02T15:04:05", temp.Flushes[i].TimeEnd)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
-		flushes[i].Rating = temp[i].Rating
-		flushes[i].PhoneUsed = temp[i].PhoneUsed
-		flushes[i].Note = temp[i].Note
-		flushes[i].ID = temp[i].ID
+		flushes.Flushes[i].Rating = temp.Flushes[i].Rating
+		flushes.Flushes[i].PhoneUsed = temp.Flushes[i].PhoneUsed
+		flushes.Flushes[i].Note = temp.Flushes[i].Note
+		flushes.Flushes[i].ID = temp.Flushes[i].ID
 	}
 	log.Println("temporary flush struct: ", temp)
 	log.Println("Flushes: ", flushes)
-	if len(flushes) > 0 {
+	if len(flushes.Flushes) > 0 {
 		ctx.SetState("skip", skip+3)
 	}
-	return flushes, nil
+	if temp.MoreDataAvailable {
+		return flushes.Flushes, true, nil
+	}
+	return flushes.Flushes, false, nil
 }
 
 func ChangePass(newPass string, currentCreds string) error {
