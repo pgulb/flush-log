@@ -64,7 +64,7 @@ def test_getting_flushes():
     assert response.status_code == status.HTTP_200_OK
     rev = flushes
     rev.reverse()
-    js = response.json()
+    js = response.json()["flushes"]
     for i, f in enumerate(rev):
         f["_id"] = js[i]["_id"]
     print(rev)
@@ -79,7 +79,7 @@ def test_getting_flushes_noflushes():
         "/flushes", auth=BasicAuth(username=username, password=password)
     )
     assert response.status_code == status.HTTP_200_OK
-    assert response.json() == []
+    assert response.json()["flushes"] == []
 
 
 def test_getting_flushes_with_skip():
@@ -137,17 +137,21 @@ def test_getting_flushes_with_skip():
         params={"skip": 0},
     )
     assert response.status_code == status.HTTP_200_OK
-    js = response.json()
+    js = response.json()["flushes"]
     assert len(js) == 3
     assert js[0]["time_start"] == flushes[-1]["time_start"]
+    if not response.json()["more_data_available"]:
+        raise AssertionError
     response = client.get(
         "/flushes",
         auth=BasicAuth(username=username, password=password),
         params={"skip": 3},
     )
     assert response.status_code == status.HTTP_200_OK
-    js = response.json()
+    js = response.json()["flushes"]
     assert len(js) == 3
+    if response.json()["more_data_available"]:
+        raise AssertionError
     assert js[0]["time_start"] == flushes[2]["time_start"]
 
     response = client.get(
@@ -156,5 +160,7 @@ def test_getting_flushes_with_skip():
         params={"skip": 6},
     )
     assert response.status_code == status.HTTP_200_OK
-    js = response.json()
+    js = response.json()["flushes"]
     assert len(js) == 0
+    if response.json()["more_data_available"]:
+        raise AssertionError

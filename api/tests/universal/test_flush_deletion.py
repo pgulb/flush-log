@@ -103,13 +103,13 @@ def test_flush_delete_byid():
             ),
         )
         assert response.status_code == status.HTTP_201_CREATED
-    assert get_flush_count("testflushdeletebyid") == 2  # noqa: PLR2004
+    assert get_flush_count("testflushdeletebyid") == 2
     flushes = client.get(
         "/flushes",
         auth=httpx.BasicAuth(
             username="testflushdeletebyid", password="testflushdeletebyid"
         ),
-    ).json()
+    ).json()["flushes"]
     for key in flushes:
         response = client.request(
             "DELETE",
