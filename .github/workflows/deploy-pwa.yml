@@ -8,6 +8,7 @@ on:
       - main
     types:
       - completed
+  workflow_dispatch:
 
 permissions:
   contents: read
