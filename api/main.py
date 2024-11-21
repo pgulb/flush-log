@@ -218,6 +218,17 @@ def delete_flush_by_id(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+def flushes_response(
+    entries: list, username: str, skip: Union[int, None] = None
+) -> dict:
+    if skip is not None:
+        return {
+            "flushes": entries,
+            "more_data_available": skip + 3 < get_flush_count(username),
+        }
+    return {"flushes": entries, "more_data_available": False}
+
+
 @app.get("/flushes", status_code=status.HTTP_200_OK)
 def get_flushes(
     export_format: Union[str, None] = None,
@@ -272,7 +283,10 @@ def get_flushes(
                 headers={"Content-Disposition": "attachment; filename=flushes.csv"},
                 media_type="text/csv",
             )
-        return entries
+        for e in entries:
+            e["time_start"] = e["time_start"].isoformat()
+            e["time_end"] = e["time_end"].isoformat()
+        return flushes_response(entries, credentials.username, skip)
     except Exception as e:
         logging.error(e)
         logging.info(type(entries))
