@@ -13,19 +13,20 @@ import (
 )
 
 const (
-	YellowButtonCss     = "font-bold bg-amber-600 p-2 rounded mx-1"
-	ErrorDivCss         = "flex flex-row fixed bottom-4 left-4 bg-red-500 p-4 text-xl rounded-lg"
-	CenteringDivCss     = "flex flex-row min-h-screen justify-center items-center"
-	WindowDivCss        = "p-4 text-center text-xl shadow-lg bg-zinc-800 rounded-lg mx-10"
-	InviCss             = "fixed invisible"
-	RootContainerCss    = "shadow-lg bg-zinc-800 rounded-lg p-6 min-h-72 relative"
-	LoadingCss          = "flex flex-row justify-center items-center"
-	RemoveButtonCss     = "font-bold bg-red-500 p-2 rounded hover:bg-red-700 m-1"
-	LogoutButtonCss     = "font-bold bg-orange-600 p-2 rounded mx-1 hover:bg-orange-800"
-	UpdateButtonCss     = "bg-green-600 hover:bg-green-800 text-xl p-2 rounded bottom-4 right-4 fixed"
-	InstallButtonCss    = "bg-green-600 hover:bg-green-800 p-2 rounded m-2"
-	BurgerMenuButtonCss = "text-xl fixed top-4 right-4"
-	RootButtonsCss      = "flex flex-col absolute top-12 right-4"
+	YellowButtonCss      = "font-bold bg-amber-600 p-2 rounded mx-1"
+	ErrorDivCss          = "flex flex-row fixed bottom-4 left-4 bg-red-500 p-4 text-xl rounded-lg"
+	CenteringDivCss      = "flex flex-row min-h-screen justify-center items-center"
+	WindowDivCss         = "p-4 text-center text-xl shadow-lg bg-zinc-800 rounded-lg mx-10"
+	InviCss              = "fixed invisible"
+	RootContainerCss     = "shadow-lg bg-zinc-800 rounded-lg p-6 min-h-72 relative"
+	LoadingCss           = "flex flex-row justify-center items-center"
+	RemoveButtonCss      = "font-bold bg-red-500 p-2 rounded hover:bg-red-700 m-1"
+	LogoutButtonCss      = "font-bold bg-orange-600 p-2 rounded mx-1 hover:bg-orange-800"
+	UpdateButtonCss      = "bg-green-600 hover:bg-green-800 text-xl p-2 rounded bottom-4 right-4 fixed"
+	InstallButtonCss     = "bg-green-600 hover:bg-green-800 p-2 rounded m-2"
+	BurgerMenuButtonCss  = "text-xl fixed top-4 right-4"
+	RootButtonsCss       = "flex flex-col absolute top-12 right-4"
+	LoadFlushesButtonCss = YellowButtonCss + " hover:bg-amber-800 align-middle"
 )
 
 type ErrorContainer struct {
@@ -100,7 +101,6 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 	if !creds.LoggedIn {
 		log.Println("Not logged in at root...")
 	} else {
-		Hide("update-button")
 		app.Window().GetElementByID("root-container").Set("className", RootContainerCss)
 		app.Window().GetElementByID("about-container").Set("className", "invisible fixed")
 		ShowLoading("flushes-loading")
@@ -111,6 +111,9 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 			ctx.Dispatch(func(ctx app.Context) {
 				if !more {
 					Hide("update-button")
+				} else {
+					log.Println("*** Showing update button...")
+					app.Window().GetElementByID("update-button").Set("className", LoadFlushesButtonCss)
 				}
 				if err != nil {
 					ShowErrorDiv(ctx, err, 2)
@@ -183,17 +186,19 @@ type buttonUpdate struct {
 
 func (b *buttonUpdate) Render() app.UI {
 	return app.Button().Text("Load More").OnClick(b.onClick).Class(
-		YellowButtonCss + " hover:bg-amber-800 align-middle").ID("update-button")
+		LoadFlushesButtonCss).ID("update-button")
 }
 func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 	ShowLoading("flushes-loading-update")
-	Hide("update-button")
 	ctx.Async(func() {
 		result, more := GetFlushesFromOID(ctx)
 		log.Println("more-data: ", more)
 		ctx.Dispatch(func(ctx app.Context) {
 			if !more {
 				Hide("update-button")
+			} else {
+				log.Println("*** Showing update button...")
+				app.Window().GetElementByID("update-button").Set("className", LoadFlushesButtonCss)
 			}
 			defer Hide("flushes-loading-update")
 			if result == nil {
