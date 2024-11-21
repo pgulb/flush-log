@@ -9,6 +9,7 @@ import (
 )
 
 func TestValidateRegistryCreds(t *testing.T) {
+	t.Parallel()
 	cases := []f.LastTriedCreds{
 		{
 			User:     "test",
@@ -49,6 +50,7 @@ func TestValidateRegistryCreds(t *testing.T) {
 }
 
 func TestValidateLoginCreds(t *testing.T) {
+	t.Parallel()
 	cases := []f.LastTriedCreds{
 		{
 			User:     "test",
@@ -83,6 +85,7 @@ func TestValidateLoginCreds(t *testing.T) {
 }
 
 func TestValidateFlush(t *testing.T) {
+	t.Parallel()
 	failCases := []f.Flush{
 		{
 			TimeStart: time.Now(),

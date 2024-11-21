@@ -11,6 +11,7 @@ import (
 )
 
 func TestBasicAuth(t *testing.T) {
+	t.Parallel()
 	cases := []map[string]string{
 		{
 			"username": "test",
@@ -38,6 +39,7 @@ func TestBasicAuth(t *testing.T) {
 }
 
 func TestCloseBody(t *testing.T) {
+	t.Parallel()
 	r := &http.Response{
 		Body: io.NopCloser(&bytes.Buffer{}),
 	}
@@ -45,6 +47,7 @@ func TestCloseBody(t *testing.T) {
 }
 
 func TestAuthorizedRequest(t *testing.T) {
+	t.Parallel()
 	cases := []map[string]interface{}{
 		{
 			"method":    "GET",
