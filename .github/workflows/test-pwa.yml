@@ -50,6 +50,16 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  build-api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
+      - name: Build test API image
+        run: docker build -t flush-log:api -f ./api/Dockerfile ./api/
+
   pwa-test:
     runs-on: ubuntu-latest
     services:
@@ -70,7 +80,7 @@ jobs:
         ports:
           - 27017:27017
       api:
-        image: ghcr.io/pgulb/flush-log:api
+        image: flush-log:api
         ports:
           - 6789:6789
         env:
