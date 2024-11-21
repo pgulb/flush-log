@@ -18,7 +18,6 @@ func TestLoadPages(t *testing.T) {
 }
 
 func TestCheckForErrorDivId(t *testing.T) {
-	t.Parallel()
 	for _, url := range Endpoints() {
 		u := launcher.New().Bin(LauncherSystemBrowser()).MustLaunch()
 		b := rod.New().ControlURL(u).MustConnect()

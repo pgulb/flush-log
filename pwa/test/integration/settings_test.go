@@ -9,7 +9,6 @@ import (
 )
 
 func TestCheckPhoneUsedAsDefault(t *testing.T) {
-	t.Parallel()
 	p, b := RegisterAndGoToSettings(
 		"user_settings_test",
 		"pass_settings_test",
@@ -55,7 +54,6 @@ func TestChangePassword(t *testing.T) {
 }
 
 func TestAccountRemoval(t *testing.T) {
-	t.Parallel()
 	p, b := RegisterAndGoToSettings(
 		"user_settings_test3",
 		"pass_settings_test3",
