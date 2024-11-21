@@ -52,7 +52,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   pwa-test:
-    needs: [build-pwa, build-api]
+    needs: [build-pwa]
     runs-on: ubuntu-latest
     services:
       pwa:
