@@ -1194,7 +1194,7 @@ func (b *SubmitEditedFlushButton) Render() app.UI {
 	return app.Button().
 		Text("Submit").
 		OnClick(b.onClick).
-		Class(YellowButtonCss + " hover:bg-amber-800")
+		Class(YellowButtonCss + " hover:bg-amber-800").ID("edit-submit-button")
 }
 func (b *SubmitEditedFlushButton) onClick(ctx app.Context, e app.Event) {
 	ShowLoading("edit-loading")
