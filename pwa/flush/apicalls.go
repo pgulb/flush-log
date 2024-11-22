@@ -340,3 +340,92 @@ func GiveFeedback(creds Creds, note string) (int, error) {
 	defer CloseBody(r)
 	return r.StatusCode, nil
 }
+
+func SubmitEditedFlush(creds Creds, flush Flush) (int, error) {
+	apiUrl, err := GetApiUrl()
+	if err != nil {
+		return 0, err
+	}
+	req, err := http.NewRequest("PUT", apiUrl+"/flush/"+flush.ID, nil)
+	if err != nil {
+		return 0, err
+	}
+	req.Header.Add("Authorization", "Basic "+creds.UserColonPass)
+	q := url.Values{}
+	q.Add("time_start", flush.TimeStart.Format("2006-01-02 15:04:05"))
+	q.Add("time_end", flush.TimeEnd.Format("2006-01-02 15:04:05"))
+	if flush.PhoneUsed {
+		q.Add("phone_used", "true")
+	} else {
+		q.Add("phone_used", "false")
+	}
+	q.Add("rating", strconv.Itoa(flush.Rating))
+	q.Add("note", flush.Note)
+	req.URL.RawQuery = q.Encode()
+	r, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer CloseBody(r)
+	if r.StatusCode >= 400 {
+		b, err := io.ReadAll(r.Body)
+		if err != nil {
+			log.Println("error while reading body")
+			log.Println(err)
+		} else {
+			log.Println(string(b))
+		}
+	}
+	return r.StatusCode, nil
+}
+
+func GetFlushByID(ctx app.Context, flushID string) (Flush, int, error) {
+	apiUrl, err := GetApiUrl()
+	if err != nil {
+		return Flush{}, 0, err
+	}
+	req, err := http.NewRequest("GET", apiUrl+"/flush/"+flushID, nil)
+	if err != nil {
+		return Flush{}, 0, err
+	}
+	var c Creds
+	ctx.GetState("creds", &c)
+	req.Header.Add("Authorization", "Basic "+c.UserColonPass)
+	r, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return Flush{}, 0, err
+	}
+	defer CloseBody(r)
+	bytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		return Flush{}, 0, err
+	}
+	var temp TempFlush
+	err = json.Unmarshal(bytes, &temp)
+	if err != nil {
+		return Flush{}, 0, err
+	}
+	flush := Flush{
+		Rating:    temp.Rating,
+		PhoneUsed: temp.PhoneUsed,
+		Note:      temp.Note,
+		ID:        temp.ID,
+	}
+	flush.TimeStart, err = time.Parse(
+		"2006-01-02T15:04:05",
+		temp.TimeStart,
+	)
+	if err != nil {
+		return Flush{}, 0, err
+	}
+	flush.TimeEnd, err = time.Parse(
+		"2006-01-02T15:04:05",
+		temp.TimeEnd,
+	)
+	if err != nil {
+		return Flush{}, 0, err
+	}
+	log.Println("temporary flush struct: ", temp)
+	log.Println("Flush: ", flush)
+	return flush, r.StatusCode, nil
+}
