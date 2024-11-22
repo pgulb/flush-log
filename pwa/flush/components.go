@@ -551,6 +551,7 @@ func FlushTable(flushes []Flush) app.UI {
 				timeDiv(flush),
 				app.P().Text("Rating: "+strconv.Itoa(flush.Rating)),
 				app.Div().Body(
+					&EditFlushButton{ID: flush.ID},
 					&RemoveFlushButton{ID: flush.ID},
 					&ConfirmRemoveFlushButton{ID: flush.ID},
 					&CancelRemoveFlushButton{ID: flush.ID},
@@ -1069,4 +1070,194 @@ func (c *SubmitFeedbackButton) onClick(ctx app.Context, e app.Event) {
 		})
 	})
 	app.Window().Set("location", ".")
+}
+
+type EditFlushButton struct {
+	app.Compo
+	ID string
+}
+
+func (b *EditFlushButton) Render() app.UI {
+	return app.Button().
+		Text("Edit 🛠️").
+		OnClick(b.onClick).
+		Class(YellowButtonCss + " hover:bg-amber-800").ID("edit-" + b.ID)
+}
+func (b *EditFlushButton) onClick(ctx app.Context, e app.Event) {
+	ctx.SetState("flush-id-to-edit", b.ID).ExpiresAt(time.Now().Add(10 * time.Minute)).Persist()
+	app.Window().Set("location", "edit")
+}
+
+type EditFlushContainer struct {
+	app.Compo
+	oldFlush Flush
+}
+
+func (c *EditFlushContainer) OnMount(ctx app.Context) {
+	var flushID string
+	ShowLoading("edit-loading")
+	ctx.Async(func() {
+		ctx.GetState("flush-id-to-edit", &flushID)
+		oldFlush, status, err := GetFlushByID(ctx, flushID)
+		ctx.Dispatch(func(ctx app.Context) {
+			defer Hide("edit-loading")
+			if err != nil {
+				Hide("edit-loading")
+				ShowErrorDiv(ctx, err, 1)
+				return
+			}
+			switch status {
+			case 200:
+				c.oldFlush = oldFlush
+			case 404:
+				Hide("edit-loading")
+				ShowErrorDiv(ctx, errors.New("Flush not found"), 1)
+				return
+			default:
+				Hide("edit-loading")
+				ShowErrorDiv(ctx, errors.New("error while fetching flush"), 1)
+				return
+			}
+		})
+	})
+}
+func (c *EditFlushContainer) Render() app.UI {
+	tempRatings := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	ratings := make([]int, 0)
+	for _, r := range tempRatings {
+		if r != c.oldFlush.Rating {
+			ratings = append(ratings, r)
+		}
+	}
+	return app.Div().Body(
+		&UpdateButton{},
+		app.Div().Body(
+			app.Div().Body(
+				app.P().Text("Edit flush").Class("font-bold"),
+				app.Br(),
+				app.Label().For("edited-time-start").Text("Start:").Class("m-2"),
+				app.Input().
+					Type("datetime-local").
+					ID("edited-time-start").
+					Class("m-2").
+					Value(c.oldFlush.TimeStart.Format("2006-01-02T15:04")),
+				app.Br(),
+				app.Label().For("edited-time-end").Text("End:").Class("m-2"),
+				app.Input().Type("datetime-local").ID("edited-time-end").Class("m-2").
+					Value(c.oldFlush.TimeEnd.Format("2006-01-02T15:04")),
+				app.Br(),
+				app.Label().For("edited-rating").Text("Rating (1-worst, 10-best)").Class("m-2"),
+				app.Select().ID("edited-rating").Class("m-2").Body(
+					app.Option().
+						Value(strconv.Itoa(c.oldFlush.Rating)).
+						Text(strconv.Itoa(c.oldFlush.Rating)).
+						Selected(true),
+					app.Range(ratings).Slice(func(i int) app.UI {
+						return app.Option().
+							Value(strconv.Itoa(ratings[i])).
+							Text(strconv.Itoa(ratings[i]))
+					}),
+				),
+				app.Br(),
+				app.Label().For("edited-phone-used").Text("Phone used").Class("m-2"),
+				app.Input().
+					Type("checkbox").
+					ID("edited-phone-used").
+					Class("m-2").
+					Checked(c.oldFlush.PhoneUsed),
+				app.Br(),
+				app.Hr(),
+				app.Textarea().Placeholder("notes").ID(
+					"edited-note").MaxLength(100).Text(c.oldFlush.Note),
+				app.Br(),
+				&SubmitEditedFlushButton{},
+				&LoadingWidget{id: "edit-loading"},
+			).
+				Class("p-4 text-center text-xl shadow-lg bg-zinc-800 rounded-lg"),
+			app.Br(),
+			&LinkButton{
+				Text:          "Back to Home Screen",
+				Location:      ".",
+				AdditionalCss: "hover:bg-amber-800",
+			},
+		).
+			Class("flex flex-col"),
+		app.Div().Body(&ErrorContainer{}),
+	).Class(CenteringDivCss)
+}
+
+type SubmitEditedFlushButton struct {
+	app.Compo
+}
+
+func (b *SubmitEditedFlushButton) Render() app.UI {
+	return app.Button().
+		Text("Submit").
+		OnClick(b.onClick).
+		Class(YellowButtonCss + " hover:bg-amber-800").ID("edit-submit-button")
+}
+func (b *SubmitEditedFlushButton) onClick(ctx app.Context, e app.Event) {
+	ShowLoading("edit-loading")
+	flush, errFlush := NewFLush(ctx,
+		app.Window().GetElementByID("edited-time-start").Get("value").String(),
+		app.Window().GetElementByID("edited-time-end").Get("value").String(),
+		app.Window().GetElementByID("edited-rating").Get("value").String(),
+		app.Window().GetElementByID("edited-phone-used").Get("checked").Bool(),
+		app.Window().GetElementByID("edited-note").Get("value").String())
+	var id string
+	ctx.GetState("flush-id-to-edit", &id)
+	flush.ID = id
+	var creds Creds
+	ctx.GetState("creds", &creds)
+	var err error
+	var status int
+	ctx.Async(func() {
+		errVal := ValidateFlush(flush)
+		if errVal == nil {
+			status, err = SubmitEditedFlush(creds, flush)
+		}
+		ctx.Dispatch(func(ctx app.Context) {
+			log.Println("*** Dispatch from SubmitEditedFlushButton ***")
+			defer Hide("edit-loading")
+			if errVal != nil {
+				Hide("edit-loading")
+				ShowErrorDiv(ctx, errVal, 1)
+				return
+			}
+			if errFlush != nil {
+				Hide("edit-loading")
+				ShowErrorDiv(ctx, err, 2)
+				return
+			}
+			if err != nil {
+				Hide("edit-loading")
+				ShowErrorDiv(ctx, err, 1)
+				return
+			}
+			log.Println("*** switching status from SubmitEditedFlush ***")
+			switch status {
+			case 200:
+				ctx.SetState("flush-id-to-edit", flush.ID).
+					ExpiresAt(time.Now().Add(10 * time.Minute)).
+					Persist()
+				log.Println("*** Flush updated successfully")
+			case 400:
+				Hide("edit-loading")
+				ShowErrorDiv(ctx, errors.New("error while updating flush"), 1)
+				return
+			case 422:
+				Hide("edit-loading")
+				ShowErrorDiv(ctx, errors.New("bad flush data"), 1)
+				return
+			case 404:
+				Hide("edit-loading")
+				ShowErrorDiv(ctx, errors.New("flush not found"), 1)
+				return
+			default:
+				Hide("edit-loading")
+				ShowErrorDiv(ctx, errors.New("failed to edit flush"), 1)
+				return
+			}
+		})
+	})
 }

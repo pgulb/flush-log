@@ -16,6 +16,7 @@ func Run() {
 	app.Route("/new", func() app.Composer { return &NewFlushContainer{} })
 	app.Route("/settings", func() app.Composer { return &SettingsContainer{} })
 	app.Route("/feedback", func() app.Composer { return &GiveFeedbackContainer{} })
+	app.Route("/edit", func() app.Composer { return &EditFlushContainer{} })
 	app.RunWhenOnBrowser()
 
 	if os.Getenv("BUILD_STATIC") == "true" {

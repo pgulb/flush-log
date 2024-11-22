@@ -9,6 +9,7 @@ from typing import Union
 import dateutil
 import fastapi
 import pymongo
+from bson.errors import InvalidId
 from bson.objectid import ObjectId
 from db import (
     create_mock_client,
@@ -424,3 +425,66 @@ def give_feedback(
 def get_feedback_count(username: str) -> int:
     feedbacks = client.flush.feedbacks
     return feedbacks.count_documents({"user_id": username})
+
+
+@app.get("/flush/{flush_id}", status_code=status.HTTP_200_OK)
+def get_flush_by_id(
+    flush_id: str,
+    credentials: HTTPBasicCredentials = Depends(security),
+):
+    check_creds(credentials)
+    flushes = client.flush.flushes
+    try:
+        flush = flushes.find_one(
+            filter={"_id": ObjectId(flush_id), "user_id": credentials.username}
+        )
+    except InvalidId as e:
+        logger.error(f"malformed flush id (cannot convert to ObjectId) - {e}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Flush not found"
+        ) from e
+    if flush is None:
+        logger.error("flush not found by id")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Flush not found"
+        )
+    del flush["user_id"]
+    flush["_id"] = str(flush["_id"])
+    flush["time_start"] = flush["time_start"].isoformat()
+    flush["time_end"] = flush["time_end"].isoformat()
+    return flush
+
+
+@app.put("/flush/{flush_id}", status_code=status.HTTP_200_OK)
+def edit_flush_by_id(
+    flush_id: str,
+    flush: Flush = Query(),
+    credentials: HTTPBasicCredentials = Depends(security),
+):
+    check_creds(credentials)
+    flushes = client.flush.flushes
+    try:
+        result = flushes.update_one(
+            filter={"_id": ObjectId(flush_id), "user_id": credentials.username},
+            update={
+                "$set": {
+                    "time_start": dateutil.parser.isoparse(flush.time_start),
+                    "time_end": dateutil.parser.isoparse(flush.time_end),
+                    "rating": flush.rating,
+                    "note": sanitize(flush.note),
+                    "phone_used": flush.phone_used,
+                }
+            },
+            upsert=False,
+        )
+    except Exception as e:
+        logger.error(f"error updating flush by id - {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Error updating flush"
+        ) from e
+    if result.matched_count != 1:
+        logger.error("flush not found by id")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Flush not found"
+        )
+    return Response(status_code=status.HTTP_200_OK)
