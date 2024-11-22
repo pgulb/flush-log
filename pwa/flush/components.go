@@ -546,12 +546,6 @@ func FlushTable(flushes []Flush) app.UI {
 	}
 	divs := []app.UI{}
 	for _, flush := range flushes {
-		var phoneUsed string
-		if flush.PhoneUsed {
-			phoneUsed = "Yes"
-		} else {
-			phoneUsed = "No"
-		}
 		divs = append(divs,
 			app.Div().Body(
 				timeDiv(flush),
@@ -561,8 +555,12 @@ func FlushTable(flushes []Flush) app.UI {
 					&ConfirmRemoveFlushButton{ID: flush.ID},
 					&CancelRemoveFlushButton{ID: flush.ID},
 				).Class("max-w-1/6 remove-flush-buttonz-div"),
-				app.P().Text("Phone used: "+phoneUsed),
-				app.P().Text("Note: '"+flush.Note+"'").Class("break-all"),
+				app.If(flush.PhoneUsed, func() app.UI {
+					return app.P().Text("Phone used")
+				}),
+				app.If(flush.Note != "", func() app.UI {
+					return app.P().Text("Note: " + flush.Note).Class("break-all italic")
+				}),
 			).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg").ID("div-"+flush.ID),
 		)
 	}
@@ -578,7 +576,7 @@ func timeDiv(flush Flush) app.UI {
 	)
 	if flush.TimeStart.Day() == flush.TimeEnd.Day() {
 		return app.Div().Body(
-			app.P().Text("Time: ").Class("font-bold inline"),
+			app.P().Text("🧻 ").Class("font-bold inline"),
 			app.P().Text(flushDuration+" minutes, "+flush.TimeStart.Format(
 				"2006-01-02 15:04")+"-"+flush.TimeEnd.Format("15:04")).Class("inline"),
 		)
