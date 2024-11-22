@@ -36,7 +36,7 @@ app.add_middleware(
 )
 security = HTTPBasic()
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s %(asctime)s %(message)s")
+logger = logging.getLogger(__name__)
 logging.getLogger("passlib").setLevel(logging.ERROR)
 
 mongo_setting = os.getenv("MONGO_URL")
@@ -44,12 +44,12 @@ if mongo_setting is None:
     raise ValueError("MONGO_URL not set")
 if mongo_setting == "mock":
     client = create_mock_client()
-    logging.info("Using mock client")
+    logger.info("Using mock client")
 else:
     client = create_mongo_client(mongo_setting)
-    logging.info("Using mongo client")
+    logger.info("Using mongo client")
     if "/?" in mongo_setting:
-        logging.info(f"client options: {mongo_setting.split('/?')[1]}")
+        logger.info(f"client options: {mongo_setting.split('/?')[1]}")
 
 
 def raise_basic_exception():
@@ -107,6 +107,7 @@ def readyz():
     try:
         client.admin.command("ping")
     except Exception:
+        logger.error("mongodb ping failed")
         return Response("NOT OK", status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
     return "OK"
 
@@ -125,6 +126,7 @@ def create_user(user: User):
             }
         )
     except pymongo.errors.DuplicateKeyError as e:
+        logger.error("User already exists")
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="User already exists"
         ) from e
@@ -140,11 +142,14 @@ def delete_user(credentials: HTTPBasicCredentials = Depends(security)):
     try:
         flushes.delete_many({"user_id": credentials.username})
         if flushes.count_documents({"user_id": credentials.username}) > 0:
+            logger.error("user still has flushes in mongodb")
             raise Exception("Error while flush deletion")
         result = users.delete_one({"_id": credentials.username})
         if result.deleted_count != 1:
+            logger.error("mongodb responded with deleted_count != 1")
             raise Exception("User not deleted")
     except Exception as e:
+        logger.error(f"error while deleting account - {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Error while deleting account",
@@ -176,6 +181,7 @@ def create_update_flush(
         if result.matched_count == 1:
             return Response(flush.time_start, status_code=status.HTTP_200_OK)
     except Exception as e:
+        logger.error(f"error adding flush - {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Error adding flush"
         ) from e
@@ -191,8 +197,10 @@ def delete_flush(
     try:
         result = flushes.delete_one(filter=filter_from_flush(credentials, flush))
         if result.deleted_count != 1:
+            logger.error("flush not deleted - deleted_count != 1")
             raise Exception("Flush not deleted")
     except Exception as e:
+        logger.error(f"error deleting flush - {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Error deleting flush"
         ) from e
@@ -210,8 +218,10 @@ def delete_flush_by_id(
             filter=filter_from_creds_and_id(credentials, flush_id)
         )
         if result.deleted_count != 1:
+            logger.error("flush not deleted by id - deleted_count != 1")
             raise Exception("Flush not deleted")
     except Exception as e:
+        logger.error(f"error deleting flush by id - {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Error deleting flush"
         ) from e
@@ -288,9 +298,7 @@ def get_flushes(
             e["time_end"] = e["time_end"].isoformat()
         return flushes_response(entries, credentials.username, skip)
     except Exception as e:
-        logging.error(e)
-        logging.info(type(entries))
-        logging.info(entries)
+        logger.error(f"error getting flushes - {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Error getting flushes"
         ) from e
@@ -314,8 +322,10 @@ def update_password(
         )
         if result.matched_count == 1:
             return Response(status_code=status.HTTP_200_OK)
+        logger.error(f"pass_change matched_count == {result.matched_count}")
         raise Exception(f"matched_count == {result.matched_count}")
     except Exception as e:
+        logger.error(f"error changing password - {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Error changing password"
         ) from e
@@ -383,6 +393,7 @@ def get_flush_stats(credentials: HTTPBasicCredentials = Depends(security)):
         del json_stats["_id"]
         return json_stats
     except Exception as e:
+        logger.error(f"error getting stats - {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Error getting stats"
         ) from e
@@ -404,6 +415,7 @@ def give_feedback(
         )
         return Response(status_code=status.HTTP_201_CREATED)
     except Exception as e:
+        logger.error(f"error giving feedback - {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Error giving feedback"
         ) from e
