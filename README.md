@@ -89,10 +89,9 @@ task test-pwa-integration-show-window
 ```
 ## Github Workflows
 Workflows run if files in api/ or pwa/ folder change
-- test-api.yml - run tests for API on each push
 - test-pwa.yml - build docker image and run tests for PWA on each push
 - deploy-pwa.yml - build static content and deploy to Github Pages after tests complete (on main branch)
-
-## API deployment
-API image is built and deployed automatically with Google Cloud Run after push to main
+- test-api.yml - run tests for API on each push
+- publish-api-image.yml - build API image after tests
+- deploy-api.yml - deploy API
   
