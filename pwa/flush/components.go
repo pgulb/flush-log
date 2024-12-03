@@ -1016,7 +1016,7 @@ func (c *GiveFeedbackContainer) Render() app.UI {
 				app.P().Text("Feedback").Class("font-bold"),
 				app.Br(),
 				app.Textarea().Placeholder("your feedback").ID(
-					"feedback-text").MaxLength(300),
+					"feedback-text").MaxLength(300).Class("p-2 rounded-lg").Rows(12).Cols(30),
 				app.Br(),
 				&SubmitFeedbackButton{},
 				&LoadingWidget{id: "new-feedback-loading"},
