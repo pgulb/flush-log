@@ -113,10 +113,10 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 			ctx.Dispatch(func(ctx app.Context) {
 				if !more {
 					log.Println("*** Hiding update button...")
-					Hide("update-button")
+					b.buttonUpdate.Visible = false
 				} else {
 					log.Println("*** Showing update button...")
-					app.Window().GetElementByID("update-button").Set("className", LoadFlushesButtonCss)
+					b.buttonUpdate.Visible = true
 				}
 				if err != nil {
 					ShowErrorDiv(ctx, err, 2)
@@ -184,12 +184,17 @@ func (b *RootContainer) GetList() app.UI {
 
 type buttonUpdate struct {
 	app.Compo
-	parent *RootContainer
+	parent  *RootContainer
+	Visible bool
 }
 
 func (b *buttonUpdate) Render() app.UI {
+	cls := InviCss
+	if b.Visible {
+		cls = LoadFlushesButtonCss
+	}
 	return app.Button().Text("Load More").OnClick(b.onClick).Class(
-		LoadFlushesButtonCss).ID("update-button")
+		cls).ID("update-button")
 }
 func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 	ShowLoading("flushes-loading-update")
@@ -199,10 +204,10 @@ func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 		ctx.Dispatch(func(ctx app.Context) {
 			if !more {
 				log.Println("*** Hiding update button...")
-				Hide("update-button")
+				b.Visible = false
 			} else {
 				log.Println("*** Showing update button...")
-				app.Window().GetElementByID("update-button").Set("className", LoadFlushesButtonCss)
+				b.Visible = true
 			}
 			defer Hide("flushes-loading-update")
 			if result == nil {
@@ -553,19 +558,19 @@ func FlushTable(flushes []Flush) app.UI {
 		divs = append(divs,
 			app.Div().Body(
 				timeDiv(flush),
-				app.P().Text("Rating: "+strconv.Itoa(flush.Rating)),
+				app.P().Text(strconv.Itoa(flush.Rating)+" ⭐"),
+				app.If(flush.PhoneUsed, func() app.UI {
+					return app.P().Text("📱 used")
+				}),
+				app.If(flush.Note != "", func() app.UI {
+					return app.P().Text("Note: " + flush.Note).Class("break-all italic")
+				}),
 				app.Div().Body(
 					&EditFlushButton{ID: flush.ID},
 					&RemoveFlushButton{ID: flush.ID},
 					&ConfirmRemoveFlushButton{ID: flush.ID},
 					&CancelRemoveFlushButton{ID: flush.ID},
 				).Class("max-w-1/6 remove-flush-buttonz-div"),
-				app.If(flush.PhoneUsed, func() app.UI {
-					return app.P().Text("Phone used")
-				}),
-				app.If(flush.Note != "", func() app.UI {
-					return app.P().Text("Note: " + flush.Note).Class("break-all italic")
-				}),
 			).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg shadow-amber-800").ID("div-"+flush.ID),
 		)
 	}
@@ -579,19 +584,16 @@ func timeDiv(flush Flush) app.UI {
 		0,
 		64,
 	)
-	if flush.TimeStart.Day() == flush.TimeEnd.Day() {
-		return app.Div().Body(
-			app.P().Text("🧻 ").Class("font-bold inline"),
-			app.P().Text(flushDuration+" minutes, "+flush.TimeStart.Format(
-				"2006-01-02 15:04")+"-"+flush.TimeEnd.Format("15:04")).Class("inline"),
-		)
-	} else {
-		return app.Div().Body(
-			app.P().Text("Time: ").Class("font-bold inline"),
-			app.P().Text(flushDuration+" minutes, "+flush.TimeStart.Format(
-				"2006-01-02 15:04")+" - "+flush.TimeEnd.Format("2006-01-02 15:04")).Class("inline"),
-		)
+	timeFmt := "15:04"
+	if flush.TimeStart.Day() != flush.TimeEnd.Day() {
+		timeFmt = "2006-01-02 15:04"
 	}
+	return app.Div().Body(
+		app.P().Text("🧻 ").Class("font-bold inline"),
+		app.P().
+			Text(flushDuration+" min, 📅 "+flush.TimeStart.Format("2006-01-02 15:04")+" - "+flush.TimeEnd.Format(timeFmt)).
+			Class("inline"),
+	)
 }
 
 type RemoveFlushButton struct {
@@ -989,13 +991,14 @@ func StatsDiv(ctx app.Context) (app.UI, error) {
 		return nil, err
 	}
 	return app.Div().Body(
-			app.P().Text("Total flushes: "+strconv.Itoa(stats.FlushCount)),
-			app.P().Text("Total time: "+strconv.Itoa(stats.TotalTime)+" minutes"),
-			app.P().Text("Mean time: "+strconv.Itoa(stats.MeanTime)+" minutes"),
-			app.P().Text("Mean rating: "+strconv.Itoa(stats.MeanRating)),
-			app.P().Text("Times with phone used: "+strconv.Itoa(stats.PhoneUsedCount)),
-			app.P().Text("Percent with phone used: "+strconv.Itoa(stats.PercentPhoneUsed)+"%"),
-		).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg font-bold shadow-amber-800"),
+			app.P().Text("Total 🧻 -> "+strconv.Itoa(stats.FlushCount)),
+			app.P().
+				Text("Total ⏱️ -> "+strconv.Itoa(stats.TotalTime)+" min ("+strconv.Itoa(stats.MeanTime)+" min average)"),
+			app.P().Text("Average ⭐ -> "+strconv.Itoa(stats.MeanRating)),
+			app.P().
+				Text("Times with 📱 -> "+strconv.Itoa(stats.PhoneUsedCount)+" ("+strconv.Itoa(stats.PercentPhoneUsed)+"%)"),
+		).
+			Class("flex flex-col p-4 border-1 shadow-lg rounded-lg font-bold shadow-amber-800"),
 		nil
 }
 
@@ -1020,7 +1023,7 @@ func (c *GiveFeedbackContainer) Render() app.UI {
 				app.P().Text("Feedback").Class("font-bold"),
 				app.Br(),
 				app.Textarea().Placeholder("your feedback").ID(
-					"feedback-text").MaxLength(300).Class("p-2 rounded-lg").Rows(12).Cols(30),
+					"feedback-text").MaxLength(300).Class("p-2 rounded-lg").Rows(10).Cols(25),
 				app.Br(),
 				&SubmitFeedbackButton{},
 				&LoadingWidget{id: "new-feedback-loading"},
