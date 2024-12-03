@@ -18,7 +18,7 @@ const (
 	CenteringDivCss      = "flex flex-row min-h-screen justify-center items-center"
 	WindowDivCss         = "p-4 text-center text-xl shadow-lg bg-zinc-800 rounded-lg mx-10"
 	InviCss              = "fixed invisible"
-	RootContainerCss     = "shadow-lg bg-zinc-800 rounded-lg p-6 min-h-72 relative"
+	RootContainerCss     = "shadow-lg bg-zinc-800 rounded-lg p-6 min-h-72 relative shadow-amber-800"
 	LoadingCss           = "flex flex-row justify-center items-center"
 	RemoveButtonCss      = "font-bold bg-red-500 p-2 rounded hover:bg-red-700 m-1"
 	LogoutButtonCss      = "font-bold bg-orange-600 p-2 rounded mx-1 hover:bg-orange-800"
@@ -26,7 +26,7 @@ const (
 	InstallButtonCss     = "bg-green-600 hover:bg-green-800 p-2 rounded m-2"
 	BurgerMenuButtonCss  = "text-xl fixed top-4 right-4"
 	RootButtonsCss       = "flex flex-col absolute top-12 right-4"
-	LoadFlushesButtonCss = YellowButtonCss + " hover:bg-amber-800 align-middle"
+	LoadFlushesButtonCss = YellowButtonCss + " hover:bg-amber-800 align-middle mt-8"
 )
 
 type ErrorContainer struct {
@@ -51,7 +51,9 @@ func (b *buttonShowRegister) Render() app.UI {
 		YellowButtonCss + " hover:bg-amber-800").ID("show-register")
 }
 func (b *buttonShowRegister) onClick(ctx app.Context, e app.Event) {
-	app.Window().GetElementByID("register-container").Set("className", WindowDivCss)
+	app.Window().
+		GetElementByID("register-container").
+		Set("className", WindowDivCss+" shadow-amber-800")
 	app.Window().GetElementByID("login-container").Set("className", InviCss)
 }
 
@@ -110,6 +112,7 @@ func (b *RootContainer) OnMount(ctx app.Context) {
 			log.Println("more-data: ", more)
 			ctx.Dispatch(func(ctx app.Context) {
 				if !more {
+					log.Println("*** Hiding update button...")
 					Hide("update-button")
 				} else {
 					log.Println("*** Showing update button...")
@@ -195,6 +198,7 @@ func (b *buttonUpdate) onClick(ctx app.Context, e app.Event) {
 		log.Println("more-data: ", more)
 		ctx.Dispatch(func(ctx app.Context) {
 			if !more {
+				log.Println("*** Hiding update button...")
 				Hide("update-button")
 			} else {
 				log.Println("*** Showing update button...")
@@ -239,7 +243,7 @@ func (l *LoginContainer) Render() app.UI {
 				),
 				&LoadingWidget{id: "login-loading"},
 			),
-		).Class("p-4 text-center text-xl shadow-lg bg-zinc-800 rounded-lg").ID("login-container"),
+		).Class("p-4 text-center text-xl shadow-lg bg-zinc-800 rounded-lg shadow-amber-800").ID("login-container"),
 		&RegisterContainer{},
 		app.Div().Body(&ErrorContainer{})).Class(
 		CenteringDivCss)
@@ -404,7 +408,7 @@ func (c *NewFlushContainer) Render() app.UI {
 				app.Br(),
 				&SubmitFlushButton{},
 				&LoadingWidget{id: "new-flush-loading"},
-			).Class("p-4 text-center text-xl shadow-lg bg-zinc-800 rounded-lg"),
+			).Class("p-4 text-center text-xl shadow-lg bg-zinc-800 rounded-lg shadow-amber-800"),
 			app.Br(),
 			&LinkButton{
 				Text:          "Back to Home Screen",
@@ -536,7 +540,7 @@ func (a *AboutContainer) Render() app.UI {
 				AdditionalCss: "hover:bg-amber-800",
 			},
 			&InstallButton{},
-		).Class("flex flex-col p-4 shadow-lg rounded-lg bg-zinc-800"),
+		).Class("flex flex-col p-4 shadow-lg rounded-lg bg-zinc-800 shadow-amber-800"),
 	).Class(CenteringDivCss).ID("about-container")
 }
 
@@ -562,7 +566,7 @@ func FlushTable(flushes []Flush) app.UI {
 				app.If(flush.Note != "", func() app.UI {
 					return app.P().Text("Note: " + flush.Note).Class("break-all italic")
 				}),
-			).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg").ID("div-"+flush.ID),
+			).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg shadow-amber-800").ID("div-"+flush.ID),
 		)
 	}
 	return app.Div().Body(divs...)
@@ -706,7 +710,7 @@ func (s *SettingsContainer) Render() app.UI {
 				app.Br(),
 				&RemoveAccountContainer{},
 			).
-				Class(WindowDivCss),
+				Class(WindowDivCss+" shadow-amber-800"),
 			app.Br(),
 			&LinkButton{
 				Text:          "Back to Home Screen",
@@ -991,7 +995,7 @@ func StatsDiv(ctx app.Context) (app.UI, error) {
 			app.P().Text("Mean rating: "+strconv.Itoa(stats.MeanRating)),
 			app.P().Text("Times with phone used: "+strconv.Itoa(stats.PhoneUsedCount)),
 			app.P().Text("Percent with phone used: "+strconv.Itoa(stats.PercentPhoneUsed)+"%"),
-		).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg font-bold"),
+		).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg font-bold shadow-amber-800"),
 		nil
 }
 
@@ -1020,7 +1024,7 @@ func (c *GiveFeedbackContainer) Render() app.UI {
 				app.Br(),
 				&SubmitFeedbackButton{},
 				&LoadingWidget{id: "new-feedback-loading"},
-			).Class("p-4 text-center text-xl shadow-lg bg-zinc-800 rounded-lg"),
+			).Class("p-4 text-center text-xl shadow-lg bg-zinc-800 rounded-lg shadow-amber-800"),
 			app.Br(),
 			&LinkButton{
 				Text:          "Back to Home Screen",
