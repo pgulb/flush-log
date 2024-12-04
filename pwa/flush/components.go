@@ -594,7 +594,7 @@ func FormatFlushTime(timeStart time.Time, timeEnd time.Time) string {
 		64,
 	)
 	durationPrefix := duration + " min, 📅 "
-	daysAgo := time.Now().Sub(timeStart).Hours() / 24
+	daysAgo := int(time.Now().Sub(timeStart).Hours()) / 24
 	switch {
 	case daysAgo <= 7:
 		dayStr := fmt.Sprintf("%v days ago, ", daysAgo)
