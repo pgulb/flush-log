@@ -578,22 +578,51 @@ func FlushTable(flushes []Flush) app.UI {
 }
 
 func timeDiv(flush Flush) app.UI {
-	flushDuration := strconv.FormatFloat(
-		flush.TimeEnd.Sub(flush.TimeStart).Minutes(),
+	return app.Div().Body(
+		app.P().Text("🧻 ").Class("font-bold inline"),
+		app.P().
+			Text(FormatFlushTime(flush.TimeStart, flush.TimeEnd)).
+			Class("inline"),
+	)
+}
+
+func FormatFlushTime(timeStart time.Time, timeEnd time.Time) string {
+	duration := strconv.FormatFloat(
+		timeEnd.Sub(timeStart).Minutes(),
 		'f',
 		0,
 		64,
 	)
-	timeFmt := "15:04"
-	if flush.TimeStart.Day() != flush.TimeEnd.Day() {
-		timeFmt = "2006-01-02 15:04"
+	durationPrefix := duration + " min, 📅 "
+	daysAgo := time.Now().Sub(timeStart).Hours() / 24
+	switch {
+	case daysAgo <= 7:
+		dayStr := fmt.Sprintf("%v days ago, ", daysAgo)
+		if daysAgo == 0 {
+			dayStr = "today, "
+		}
+		if daysAgo == 1 {
+			dayStr = "yesterday, "
+		}
+		if daysAgo == 7 {
+			dayStr = "week ago, "
+		}
+		return durationPrefix + dayStr + timeStart.Format(
+			"15:04",
+		) + " - " + timeEnd.Format(
+			"15:04",
+		)
+	default:
+		timeFmt := "15:04"
+		if timeStart.Day() != timeEnd.Day() {
+			timeFmt = "2006-01-02 15:04"
+		}
+		return durationPrefix + timeStart.Format(
+			"2006-01-02 15:04",
+		) + " - " + timeEnd.Format(
+			timeFmt,
+		)
 	}
-	return app.Div().Body(
-		app.P().Text("🧻 ").Class("font-bold inline"),
-		app.P().
-			Text(flushDuration+" min, 📅 "+flush.TimeStart.Format("2006-01-02 15:04")+" - "+flush.TimeEnd.Format(timeFmt)).
-			Class("inline"),
-	)
 }
 
 type RemoveFlushButton struct {
