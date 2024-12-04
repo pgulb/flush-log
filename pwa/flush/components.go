@@ -535,7 +535,7 @@ func (a *AboutContainer) Render() app.UI {
 			app.P().
 				Text("The app will show you statistics like total time spent, average time spent, % times with phone used etc."),
 			app.Br(),
-			app.P().Text("App is still under development. New features can be added."),
+			app.P().Text("App is under development. New features can be added."),
 			app.P().
 				Text("App can be 'installed' - it will appear on computer's program list or on phone home screen."),
 			app.Br(),
