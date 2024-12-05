@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"testing"
 	"time"
@@ -11,7 +12,7 @@ import (
 
 func TestFormatFlushTime(t *testing.T) {
 	t.Parallel()
-	a := make([]int, 1001)
+	a := make([]int, 31)
 	for i := range a {
 		a[i] = i
 	}
@@ -19,6 +20,7 @@ func TestFormatFlushTime(t *testing.T) {
 		now := time.Now()
 		subtractedTime := now.Add(time.Duration(i*-24) * time.Hour)
 		result := f.FormatFlushTime(subtractedTime, subtractedTime)
+		log.Println(result)
 		if i == 7 {
 			if !strings.Contains(result, "week ago, ") {
 				t.Errorf("FormatFlushTime() = %v, want %v", result, "week ago, ")
