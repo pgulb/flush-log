@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/maxence-charriere/go-app/v10/pkg/app"
+	d "github.com/rickb777/date/v2"
 )
 
 const (
@@ -535,7 +536,7 @@ func (a *AboutContainer) Render() app.UI {
 			app.P().
 				Text("The app will show you statistics like total time spent, average time spent, % times with phone used etc."),
 			app.Br(),
-			app.P().Text("App is still under development. New features can be added."),
+			app.P().Text("App is under development. New features can be added."),
 			app.P().
 				Text("App can be 'installed' - it will appear on computer's program list or on phone home screen."),
 			app.Br(),
@@ -578,22 +579,57 @@ func FlushTable(flushes []Flush) app.UI {
 }
 
 func timeDiv(flush Flush) app.UI {
-	flushDuration := strconv.FormatFloat(
-		flush.TimeEnd.Sub(flush.TimeStart).Minutes(),
+	return app.Div().Body(
+		app.P().Text("🧻 ").Class("font-bold inline"),
+		app.P().
+			Text(FormatFlushTime(flush.TimeStart, flush.TimeEnd)).
+			Class("inline"),
+	)
+}
+
+func FormatFlushTime(timeStart time.Time, timeEnd time.Time) string {
+	duration := strconv.FormatFloat(
+		timeEnd.Sub(timeStart).Minutes(),
 		'f',
 		0,
 		64,
 	)
-	timeFmt := "15:04"
-	if flush.TimeStart.Day() != flush.TimeEnd.Day() {
-		timeFmt = "2006-01-02 15:04"
+	dayNow := d.NewAt(time.Now())
+	dayFlushed := d.NewAt(timeStart)
+	daysDiff := dayNow.Midnight().Sub(dayFlushed.Midnight()).Hours() / 24
+	durationPrefix := duration + " min, 📅 "
+	log.Println("timeStart: ", timeStart)
+	log.Println("timeEnd: ", timeEnd)
+	log.Println("daysDiff: ", daysDiff)
+	log.Println("daysDiff int: ", int(daysDiff))
+	switch {
+	case daysDiff <= 7:
+		dayStr := fmt.Sprintf("%v days ago, ", daysDiff)
+		if daysDiff == 0 {
+			dayStr = "today, "
+		}
+		if daysDiff == 1 {
+			dayStr = "yesterday, "
+		}
+		if daysDiff == 7 {
+			dayStr = "week ago, "
+		}
+		return durationPrefix + dayStr + timeStart.Format(
+			"15:04",
+		) + " - " + timeEnd.Format(
+			"15:04",
+		)
+	default:
+		timeFmt := "15:04"
+		if timeStart.Day() != timeEnd.Day() {
+			timeFmt = "2006-01-02 15:04"
+		}
+		return durationPrefix + timeStart.Format(
+			"2006-01-02 15:04",
+		) + " - " + timeEnd.Format(
+			timeFmt,
+		)
 	}
-	return app.Div().Body(
-		app.P().Text("🧻 ").Class("font-bold inline"),
-		app.P().
-			Text(flushDuration+" min, 📅 "+flush.TimeStart.Format("2006-01-02 15:04")+" - "+flush.TimeEnd.Format(timeFmt)).
-			Class("inline"),
-	)
 }
 
 type RemoveFlushButton struct {
