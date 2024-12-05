@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/maxence-charriere/go-app/v10/pkg/app"
+	d "github.com/rickb777/date/v2"
 )
 
 const (
@@ -594,24 +594,24 @@ func FormatFlushTime(timeStart time.Time, timeEnd time.Time) string {
 		0,
 		64,
 	)
+	dayNow := d.NewAt(time.Now())
+	dayFlushed := d.NewAt(timeStart)
+	daysDiff := dayNow.Midnight().Sub(dayFlushed.Midnight()).Hours() / 24
 	durationPrefix := duration + " min, 📅 "
-	hoursAgo := math.Ceil(time.Now().Sub(timeStart).Hours())
-	daysAgo := int(hoursAgo) / 24
-
 	log.Println("timeStart: ", timeStart)
 	log.Println("timeEnd: ", timeEnd)
-	log.Println("DaysAgo: ", daysAgo)
-	log.Println("Hours ago: ", hoursAgo)
+	log.Println("daysDiff: ", daysDiff)
+	log.Println("daysDiff int: ", int(daysDiff))
 	switch {
-	case daysAgo <= 7:
-		dayStr := fmt.Sprintf("%v days ago, ", daysAgo)
-		if daysAgo == 0 {
+	case daysDiff <= 7:
+		dayStr := fmt.Sprintf("%v days ago, ", daysDiff)
+		if daysDiff == 0 {
 			dayStr = "today, "
 		}
-		if daysAgo == 1 {
+		if daysDiff == 1 {
 			dayStr = "yesterday, "
 		}
-		if daysAgo == 7 {
+		if daysDiff == 7 {
 			dayStr = "week ago, "
 		}
 		return durationPrefix + dayStr + timeStart.Format(
