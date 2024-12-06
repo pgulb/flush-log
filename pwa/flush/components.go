@@ -543,8 +543,9 @@ func (a *AboutContainer) Render() app.UI {
 			&LinkButton{
 				Text:          "Login/Register",
 				Location:      "login",
-				AdditionalCss: "hover:bg-amber-800",
+				AdditionalCss: "hover:bg-amber-800 m-2",
 			},
+			&GithubButton{},
 			&InstallButton{},
 		).Class("flex flex-col p-4 shadow-lg rounded-lg bg-zinc-800 shadow-amber-800"),
 	).Class(CenteringDivCss).ID("about-container")
