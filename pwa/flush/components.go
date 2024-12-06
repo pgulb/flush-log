@@ -26,7 +26,7 @@ const (
 	UpdateButtonCss      = "bg-green-600 hover:bg-green-800 text-xl p-2 rounded bottom-4 right-4 fixed"
 	InstallButtonCss     = "bg-green-600 hover:bg-green-800 p-2 rounded m-2"
 	BurgerMenuButtonCss  = "text-xl fixed top-4 right-4"
-	RootButtonsCss       = "flex flex-col absolute top-12 right-4"
+	RootButtonsCss       = "flex flex-col fixed top-12 right-4"
 	LoadFlushesButtonCss = YellowButtonCss + " hover:bg-amber-800 align-middle mt-8"
 )
 
@@ -159,9 +159,9 @@ func (b *RootContainer) Render() app.UI {
 					Location:      "new",
 					AdditionalCss: "hover:bg-amber-800 m-1",
 				},
+				&GithubButton{},
 				&InstallButton{},
 			).ID("root-buttons-container").Class(InviCss),
-			app.P().Text("Tracked flushes:").Class("py-2"),
 			&LoadingWidget{id: "flushes-loading"},
 			b.Stats,
 			b.GetList(),
@@ -531,8 +531,8 @@ func (a *AboutContainer) Render() app.UI {
 				app.Img().Src("/web/paper.png").Class("inline").Width(100).Height(100),
 			),
 			app.Br(),
-			app.P().Text("Application for tracking toilet flushes."),
-			app.P().Text("You can use it to save them, rate them, check your toilet stats."),
+			app.P().Text("Application for tracking time on toilet."),
+			app.P().Text("You can use it to save it, rate it, check your toilet stats."),
 			app.P().
 				Text("The app will show you statistics like total time spent, average time spent, % times with phone used etc."),
 			app.Br(),
@@ -552,7 +552,7 @@ func (a *AboutContainer) Render() app.UI {
 
 func FlushTable(flushes []Flush) app.UI {
 	if len(flushes) == 0 {
-		return app.Div().Body(app.P().Text("No flushes yet."))
+		return app.Div().Body(app.P().Text("No entries yet."))
 	}
 	divs := []app.UI{}
 	for _, flush := range flushes {
@@ -572,7 +572,7 @@ func FlushTable(flushes []Flush) app.UI {
 					&ConfirmRemoveFlushButton{ID: flush.ID},
 					&CancelRemoveFlushButton{ID: flush.ID},
 				).Class("max-w-1/6 remove-flush-buttonz-div"),
-			).Class("flex flex-col p-4 border-1 shadow-lg rounded-lg shadow-amber-800").ID("div-"+flush.ID),
+			).Class("flex flex-col p-4 border-1 shadow rounded-lg shadow-white/10").ID("div-"+flush.ID),
 		)
 	}
 	return app.Div().Body(divs...)
@@ -1030,11 +1030,11 @@ func StatsDiv(ctx app.Context) (app.UI, error) {
 			app.P().Text("Total 🧻 -> "+strconv.Itoa(stats.FlushCount)),
 			app.P().
 				Text("Total ⏱️ -> "+strconv.Itoa(stats.TotalTime)+" min ("+strconv.Itoa(stats.MeanTime)+" min average)"),
-			app.P().Text("Average ⭐ -> "+strconv.Itoa(stats.MeanRating)),
+			app.P().Text("Average ⭐ -> "+strconv.Itoa(stats.MeanRating)+"/10"),
 			app.P().
 				Text("Times with 📱 -> "+strconv.Itoa(stats.PhoneUsedCount)+" ("+strconv.Itoa(stats.PercentPhoneUsed)+"%)"),
 		).
-			Class("flex flex-col p-4 border-1 shadow-lg rounded-lg font-bold shadow-amber-800"),
+			Class("flex flex-col p-4 border-1 shadow-lg rounded-lg font-bold shadow-white/20"),
 		nil
 }
 
@@ -1303,4 +1303,20 @@ func (b *SubmitEditedFlushButton) onClick(ctx app.Context, e app.Event) {
 			}
 		})
 	})
+}
+
+type GithubButton struct {
+	app.Compo
+}
+
+func (b *GithubButton) Render() app.UI {
+	return app.Div().
+		OnClick(b.onClick).Body(
+		app.P().Text("GitHub"),
+		app.Img().Src("/web/github-mark-white.png").Class("w-6 h-6 ml-2"),
+	).
+		Class(YellowButtonCss + " hover:bg-amber-800 flex justify-center")
+}
+func (b *GithubButton) onClick(ctx app.Context, e app.Event) {
+	app.Window().Call("open", "https://github.com/pgulb/flush-log")
 }
