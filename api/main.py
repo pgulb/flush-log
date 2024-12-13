@@ -24,7 +24,21 @@ from fastapi.security import HTTPBasicCredentials
 from httpbasic import HTTPBasic
 from models import Feedback, Flush, User
 
-app = fastapi.FastAPI()
+logger = logging.getLogger(__name__)
+logging.getLogger("passlib").setLevel(logging.ERROR)
+
+app_args = {}
+disable_openapi = os.getenv("DISABLE_OPENAPI")
+try:
+    if disable_openapi.lower() == "true":
+        app_args["docs_url"] = None
+        app_args["redoc_url"] = None
+        app_args["openapi_url"] = None
+        logger.info("OpenAPI and Swagger is DISABLED")
+except AttributeError:
+    pass
+app = fastapi.FastAPI(**app_args)
+
 origins = [
     "*",
 ]
@@ -36,9 +50,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 security = HTTPBasic()
-
-logger = logging.getLogger(__name__)
-logging.getLogger("passlib").setLevel(logging.ERROR)
 
 mongo_setting = os.getenv("MONGO_URL")
 if mongo_setting is None:
