@@ -43,7 +43,7 @@ tasks:
       MONGO_URL: mongodb://mongo:27017
   init-uv-venv:
     cmds:
-      - uv venv
+      - uv venv -p 3.12.6
       - uv pip install -r requirements.txt
       - uv pip install pytest httpx
     dir: api
