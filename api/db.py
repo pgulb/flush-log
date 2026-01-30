@@ -1,13 +1,13 @@
 from html.parser import HTMLParser
 from io import StringIO
+import hashlib
 
 import mongomock
 import pymongo
-from passlib.hash import bcrypt
 
 
 def hash_password(password: str) -> str:
-    return bcrypt.hash(password)
+    return hashlib.sha512(password.encode('utf-8')).hexdigest()
 
 
 class MLStripper(HTMLParser):
@@ -32,7 +32,7 @@ def sanitize(note: str) -> str:
 
 
 def verify_pass_hash(password: str, pass_hash: str) -> bool:
-    return bcrypt.verify(password, pass_hash)
+    return hashlib.sha512(password.encode('utf-8')).hexdigest() == pass_hash
 
 
 def create_mongo_client(url: str) -> pymongo.MongoClient:

@@ -99,7 +99,7 @@ def check_creds(credentials: HTTPBasicCredentials):
     user = users.find_one({"_id": credentials.username})
     if user is None:
         raise_basic_exception()
-    if not verify_pass_hash(credentials.password.encode("utf-8"), user["pass_hash"]):
+    if not verify_pass_hash(credentials.password, user["pass_hash"]):
         raise_basic_exception()
 
 
